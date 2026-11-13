@@ -1,44 +1,63 @@
 "use client";
 // WebGL viewer for a licensed vehicle model. Hotspots and exploded offsets come
 // only from asset_mesh_bindings; unbound meshes are never labelled or moved.
+// All selection/visibility state is owned by the parent so the model and the
+// parts list stay in sync.
 import { useEffect, useRef, useState } from "react";
 import * as THREE from "three";
 import { OrbitControls } from "three/addons/controls/OrbitControls.js";
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 import { RoomEnvironment } from "three/addons/environments/RoomEnvironment.js";
 import type { MeshBinding } from "@/lib/api";
-import { codeForMesh, easeInOut, explodeTargets, lerpVec, meshesForCode, missingMeshes, type Vec3 } from "@/lib/explode";
+import { easeInOut, explodeTargets, missingMeshes, type Vec3 } from "@/lib/explode";
 
 export type ModelSource = { type: "url"; url: string } | { type: "scene"; build: () => THREE.Object3D };
 
 interface Props {
   source: ModelSource;
   bindings: MeshBinding[];
-  selectedCode: string | null;
-  exploded: boolean;
-  onSelectCode: (code: string) => void;
   label: string;
+  highlighted: Set<string>;
+  exploded: Set<string>;
+  hidden: Set<string>;
+  isolate: boolean;
+  onPickMesh: (meshName: string) => void;
+  /** Increment to frame the highlighted meshes. */
+  focusNonce: number;
+  /** Increment to return the camera to its starting view. */
+  resetNonce: number;
 }
+
+interface MatState { mat: THREE.Material; opacity: number; transparent: boolean; depthWrite: boolean }
+interface CamTween { fromPos: THREE.Vector3; toPos: THREE.Vector3; fromTarget: THREE.Vector3; toTarget: THREE.Vector3; t: number }
 
 interface Runtime {
   bound: Map<string, THREE.Object3D>;
   base: Map<string, THREE.Vector3>;
   targets: Map<string, Vec3>;
-  t: number; dir: 0 | 1;
-  camera: THREE.PerspectiveCamera; controls: OrbitControls; home: { pos: THREE.Vector3; target: THREE.Vector3 };
-  scale: number;
+  t: Map<string, number>;
+  want: Map<string, 0 | 1>;
+  /** Every mesh, with the name of its bound ancestor (null if unbound). */
+  meshes: { mesh: THREE.Mesh; owner: string | null; mats: MatState[] }[];
+  camera: THREE.PerspectiveCamera; controls: OrbitControls;
+  home: { pos: THREE.Vector3; target: THREE.Vector3 };
+  tween: CamTween | null;
+  size: number;
 }
 
 const HIGHLIGHT = new THREE.Color("#d8b36b");
+const BLACK = new THREE.Color(0);
+const GHOST_OPACITY = 0.08;
 
-export default function Viewer3D({ source, bindings, selectedCode, exploded, onSelectCode, label }: Props) {
+export default function Viewer3D(props: Props) {
+  const { source, bindings, label, highlighted, exploded, hidden, isolate, onPickMesh, focusNonce, resetNonce } = props;
   const host = useRef<HTMLDivElement>(null);
   const rt = useRef<Runtime | null>(null);
-  const selectRef = useRef(onSelectCode);
+  const pickRef = useRef(onPickMesh);
   const [state, setState] = useState<"loading" | "ready" | "error">("loading");
   const [missing, setMissing] = useState<string[]>([]);
 
-  useEffect(() => { selectRef.current = onSelectCode; }, [onSelectCode]);
+  useEffect(() => { pickRef.current = onPickMesh; }, [onPickMesh]);
 
   useEffect(() => {
     const el = host.current!;
@@ -82,10 +101,16 @@ export default function Viewer3D({ source, bindings, selectedCode, exploded, onS
       root.traverse((o) => {
         if (o.name) all.push(o.name);
         if (names.has(o.name) && !bound.has(o.name)) bound.set(o.name, o);
-        if ((o as THREE.Mesh).isMesh) {
-          const m = o as THREE.Mesh;
-          m.material = Array.isArray(m.material) ? m.material.map((x) => x.clone()) : m.material.clone();
-        }
+      });
+      const meshes: Runtime["meshes"] = [];
+      root.traverse((o) => {
+        const m = o as THREE.Mesh;
+        if (!m.isMesh) return;
+        m.material = Array.isArray(m.material) ? m.material.map((x) => x.clone()) : m.material.clone();
+        let owner: string | null = null;
+        for (let p: THREE.Object3D | null = m; p && !owner; p = p.parent) if (bound.get(p.name) === p) owner = p.name;
+        const mats = (Array.isArray(m.material) ? m.material : [m.material]).map((mat) => ({ mat, opacity: mat.opacity, transparent: mat.transparent, depthWrite: mat.depthWrite }));
+        meshes.push({ mesh: m, owner, mats });
       });
       scene.add(root);
       const box = new THREE.Box3().setFromObject(root);
@@ -95,16 +120,17 @@ export default function Viewer3D({ source, bindings, selectedCode, exploded, onS
       camera.far = size * 20;
       camera.position.copy(center).add(new THREE.Vector3(size * 1.05, size * 0.5, size * 1.2));
       controls.target.copy(center);
-      controls.minDistance = size * 0.35;
+      controls.minDistance = size * 0.2;
       controls.maxDistance = size * 3;
       camera.updateProjectionMatrix();
       rt.current = {
-        bound,
+        bound, meshes,
         base: new Map([...bound].map(([n, o]) => [n, o.position.clone()])),
         targets: explodeTargets(bindings, [...bound.keys()]),
-        t: 0, dir: 0,
+        t: new Map([...bound.keys()].map((n) => [n, 0])),
+        want: new Map([...bound.keys()].map((n) => [n, 0])),
         camera, controls, home: { pos: camera.position.clone(), target: center.clone() },
-        scale: size,
+        tween: null, size,
       };
       setMissing(missingMeshes(bindings, all));
       setState("ready");
@@ -116,19 +142,21 @@ export default function Viewer3D({ source, bindings, selectedCode, exploded, onS
       new GLTFLoader().load(source.url, (g) => mount(g.scene), undefined, () => !disposed && setState("error"));
     }
 
-    // Click (not drag) selects the bound ancestor of the hit mesh.
+    // Click (not drag) picks the bound ancestor of the nearest visible, non-ghosted hit.
     const ray = new THREE.Raycaster();
     let down: { x: number; y: number } | null = null;
     const onDown = (e: PointerEvent) => { down = { x: e.clientX, y: e.clientY }; };
     const onUp = (e: PointerEvent) => {
-      if (!down || Math.hypot(e.clientX - down.x, e.clientY - down.y) > 5 || !rt.current) return;
-      const r = renderer.domElement.getBoundingClientRect();
-      ray.setFromCamera(new THREE.Vector2(((e.clientX - r.left) / r.width) * 2 - 1, -((e.clientY - r.top) / r.height) * 2 + 1), camera);
+      const r = rt.current;
+      if (!down || Math.hypot(e.clientX - down.x, e.clientY - down.y) > 5 || !r) return;
+      const box = renderer.domElement.getBoundingClientRect();
+      ray.setFromCamera(new THREE.Vector2(((e.clientX - box.left) / box.width) * 2 - 1, -((e.clientY - box.top) / box.height) * 2 + 1), camera);
+      const byMesh = new Map(r.meshes.map((m) => [m.mesh, m]));
       for (const hit of ray.intersectObjects(scene.children, true)) {
-        for (let o: THREE.Object3D | null = hit.object; o; o = o.parent) {
-          const code = names.has(o.name) ? codeForMesh(bindings, o.name) : null;
-          if (code) { selectRef.current(code); return; }
-        }
+        const info = byMesh.get(hit.object as THREE.Mesh);
+        if (!info || !isShown(info.mesh) || info.mats[0]?.mat.opacity <= GHOST_OPACITY) continue;
+        if (info.owner) pickRef.current(info.owner);
+        return;
       }
     };
     renderer.domElement.addEventListener("pointerdown", onDown);
@@ -140,14 +168,23 @@ export default function Viewer3D({ source, bindings, selectedCode, exploded, onS
       const dt = now - last;
       last = now;
       const r = rt.current;
-      if (r && r.t !== r.dir) {
+      if (r) {
         const step = reduce ? 1 : dt / 700;
-        r.t = r.dir > r.t ? Math.min(r.dir, r.t + step) : Math.max(r.dir, r.t - step);
-        const k = easeInOut(r.t);
         for (const [n, o] of r.bound) {
-          const b = r.base.get(n)!;
-          const off = lerpVec([0, 0, 0], r.targets.get(n) ?? [0, 0, 0], k);
-          o.position.set(b.x + off[0], b.y + off[1], b.z + off[2]);
+          const cur = r.t.get(n)!, goal = r.want.get(n)!;
+          if (cur === goal) continue;
+          const next = goal > cur ? Math.min(goal, cur + step) : Math.max(goal, cur - step);
+          r.t.set(n, next);
+          const b = r.base.get(n)!, off = r.targets.get(n)!, k = easeInOut(next);
+          o.position.set(b.x + off[0] * k, b.y + off[1] * k, b.z + off[2] * k);
+        }
+        if (r.tween) {
+          const tw = r.tween;
+          tw.t = Math.min(1, tw.t + (reduce ? 1 : dt / 600));
+          const k = easeInOut(tw.t);
+          camera.position.lerpVectors(tw.fromPos, tw.toPos, k);
+          controls.target.lerpVectors(tw.fromTarget, tw.toTarget, k);
+          if (tw.t >= 1) r.tween = null;
         }
       }
       controls.update();
@@ -161,6 +198,8 @@ export default function Viewer3D({ source, bindings, selectedCode, exploded, onS
       cancelAnimationFrame(raf);
       ro.disconnect();
       controls.dispose();
+      renderer.domElement.removeEventListener("pointerdown", onDown);
+      renderer.domElement.removeEventListener("pointerup", onUp);
       scene.traverse((o) => {
         const m = o as THREE.Mesh;
         if (m.isMesh) {
@@ -175,54 +214,86 @@ export default function Viewer3D({ source, bindings, selectedCode, exploded, onS
     };
   }, [source, bindings]);
 
+  // Explode targets per mesh.
   useEffect(() => {
     const r = rt.current;
     if (!r) return;
-    r.dir = exploded ? 1 : 0;
+    for (const n of r.bound.keys()) r.want.set(n, exploded.has(n) ? 1 : 0);
   }, [exploded, state]);
+
+  // Highlight, isolate (ghost everything else) and hide.
+  useEffect(() => {
+    if (rt.current) applyLook(rt.current, highlighted, hidden, isolate);
+  }, [highlighted, hidden, isolate, state]);
+
+  const tweenTo = (pos: THREE.Vector3, target: THREE.Vector3) => {
+    const r = rt.current;
+    if (!r) return;
+    r.tween = { fromPos: r.camera.position.clone(), toPos: pos, fromTarget: r.controls.target.clone(), toTarget: target, t: 0 };
+  };
+
+  // Frame the highlighted meshes, keeping the current viewing direction.
+  useEffect(() => {
+    const r = rt.current;
+    if (!r || focusNonce === 0) return;
+    const box = new THREE.Box3();
+    for (const n of highlighted) { const o = r.bound.get(n); if (o?.visible) box.expandByObject(o); }
+    if (box.isEmpty()) return;
+    const center = box.getCenter(new THREE.Vector3());
+    const dist = THREE.MathUtils.clamp(box.getSize(new THREE.Vector3()).length() * 1.8, r.controls.minDistance, r.controls.maxDistance);
+    const dir = r.camera.position.clone().sub(r.controls.target).normalize();
+    tweenTo(center.clone().add(dir.multiplyScalar(dist)), center);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- runs only on explicit focus requests
+  }, [focusNonce]);
 
   useEffect(() => {
     const r = rt.current;
-    if (!r) return;
-    const on = meshesForCode(bindings, selectedCode);
-    for (const [name, obj] of r.bound) {
-      obj.traverse((o) => {
-        const m = o as THREE.Mesh;
-        if (!m.isMesh) return;
-        for (const mat of Array.isArray(m.material) ? m.material : [m.material]) {
-          const std = mat as THREE.MeshStandardMaterial;
-          if (std.emissive) { std.emissive.copy(on.has(name) ? HIGHLIGHT : new THREE.Color(0)); std.emissiveIntensity = on.has(name) ? 0.35 : 0; }
-        }
-      });
-    }
-  }, [selectedCode, bindings, state]);
+    if (r && resetNonce > 0) tweenTo(r.home.pos.clone(), r.home.target.clone());
+  }, [resetNonce]);
 
   const zoom = (f: number) => {
     const r = rt.current;
     if (!r) return;
     const d = r.camera.position.clone().sub(r.controls.target).multiplyScalar(f);
     const len = THREE.MathUtils.clamp(d.length(), r.controls.minDistance, r.controls.maxDistance);
-    r.camera.position.copy(r.controls.target).add(d.setLength(len));
+    tweenTo(r.controls.target.clone().add(d.setLength(len)), r.controls.target.clone());
   };
-  const reset = () => {
-    const r = rt.current;
-    if (!r) return;
-    r.camera.position.copy(r.home.pos);
-    r.controls.target.copy(r.home.target);
-  };
+  const home = () => { const r = rt.current; if (r) tweenTo(r.home.pos.clone(), r.home.target.clone()); };
 
   return (
     <div className="viewer-canvas" ref={host} role="region" aria-label={label}>
       <div className="viewer-toolbar">
         <button className="icon-btn" type="button" onClick={() => zoom(0.8)} aria-label="Zoom in">+</button>
         <button className="icon-btn" type="button" onClick={() => zoom(1.25)} aria-label="Zoom out">−</button>
-        <button className="icon-btn" type="button" onClick={reset} aria-label="Reset view">⟲</button>
+        <button className="icon-btn" type="button" onClick={home} aria-label="Reset camera">⟲</button>
       </div>
       {state === "loading" && <p className="asset-gate" role="status">Loading model…</p>}
-      {state === "error" && <p className="asset-gate" role="alert">The 3D model could not be loaded. Use the assembly list instead.</p>}
+      {state === "error" && <p className="asset-gate" role="alert">The 3D model could not be loaded. Use the parts list instead.</p>}
       {state === "ready" && missing.length > 0 && (
         <p className="asset-gate" role="status">{missing.length} bound mesh name(s) not found in this model: {missing.slice(0, 4).join(", ")}</p>
       )}
     </div>
   );
+}
+
+function applyLook(r: Runtime, highlighted: Set<string>, hidden: Set<string>, isolate: boolean) {
+  for (const [n, o] of r.bound) o.visible = !hidden.has(n);
+  const ghostOthers = isolate && highlighted.size > 0;
+  for (const { owner, mats } of r.meshes) {
+    const lit = owner !== null && highlighted.has(owner);
+    const ghost = ghostOthers && !lit;
+    for (const s of mats) {
+      const std = s.mat as THREE.MeshStandardMaterial;
+      if (std.emissive) { std.emissive.copy(lit ? HIGHLIGHT : BLACK); std.emissiveIntensity = lit ? 0.5 : 0; }
+      s.mat.transparent = ghost || s.transparent;
+      s.mat.opacity = ghost ? GHOST_OPACITY : s.opacity;
+      s.mat.depthWrite = ghost ? false : s.depthWrite;
+      s.mat.needsUpdate = true;
+    }
+  }
+}
+
+function isShown(o: THREE.Object3D): boolean {
+  for (let p: THREE.Object3D | null = o; p; p = p.parent) if (!p.visible) return false;
+  return true;
 }

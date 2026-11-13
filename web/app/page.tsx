@@ -41,6 +41,38 @@ export default async function Home() {
         </Link>
       </section>
 
+      <section className="wrap section" aria-labelledby="fleet-h">
+        <div className="section-head">
+          <div><div className="eyebrow">Vehicle portfolio</div><h2 id="fleet-h">Choose a <em>car.</em></h2></div>
+          <p>One vehicle at a time, finished properly. The Ferrari is in research; the others start only after the Ferrari milestone is reviewed.</p>
+        </div>
+        <div className="fleet">
+          <Link href={`/vehicles/${v.slug}`} className="card vcard live">
+            <div className="vcard-stage"><span className="stage-label">Illustrative schematic</span><Schematic className="schematic" /></div>
+            <div className="vcard-body">
+              <div className="vcard-top"><span className="eyebrow">{v.make}</span><span className="pill publicly_listed">In research</span></div>
+              <h3>{v.model}</h3>
+              <ul className="vcard-stats">
+                <li><b>{v.counts.assemblies}</b> assembly groups</li>
+                <li><b>{v.counts.verifiedParts}</b> verified parts</li>
+                <li><b>{v.model3d ? "Licensed" : "—"}</b> 3D model</li>
+              </ul>
+              <span className="vcard-cta">Open explorer <span aria-hidden="true">→</span></span>
+            </div>
+          </Link>
+          {["Lamborghini", "Maserati"].map((make) => (
+            <div className="card vcard planned" key={make} aria-disabled="true">
+              <div className="vcard-stage"><span className="vcard-planned">Planned</span></div>
+              <div className="vcard-body">
+                <div className="vcard-top"><span className="eyebrow">{make}</span><span className="pill neutral">Not started</span></div>
+                <h3>Model to be chosen</h3>
+                <p className="muted">Begins after the Ferrari milestone is reviewed.</p>
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
+
       <section className="wrap section" aria-labelledby="facts-h">
         <div className="section-head">
           <div><div className="eyebrow">Model-level facts</div><h2 id="facts-h">Know the <em>reference car.</em></h2></div>

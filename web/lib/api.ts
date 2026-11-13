@@ -17,7 +17,10 @@ export interface Provenance {
 export interface Fact { label: string; value: string; provenance: Provenance }
 export interface System { slug: string; name: string; assemblyCount: number }
 export interface DataGap { area: string; missing: string; accessNeeded: string; status: string }
-export interface MeshBinding { meshName: string; assemblyCode: string | null; partId: number | null; explode: [number, number, number] | null }
+export interface MeshBinding {
+  meshName: string; assemblyCode: string | null; partId: number | null;
+  explode: [number, number, number] | null; explodeStep?: number | null;
+}
 export interface Asset3D {
   id: number; title: string; url: string; licensor: string; licenseName: string;
   licenseUrl: string | null; isRealVehicleGeometry: boolean; bindings: MeshBinding[];

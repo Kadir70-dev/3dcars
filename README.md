@@ -22,7 +22,13 @@ See [docs/MIGRATION.md](docs/MIGRATION.md) for how the prototype maps to the new
 - Quote list (browser-local) and quote request form (stored for manual follow-up — no pricing/checkout).
 - Sources & data-gaps page.
 - Admin CMS: sign-in, create/edit/delete for sources, vehicles, facts, model years, assemblies, parts, links, specs, fitments, media/3D assets, mesh bindings, data gaps, quote status.
-- 3D viewer (rotate, zoom, select by mesh, exploded view) driven by licensed-asset mesh bindings; exercised on `/dev/viewer-fixture` with abstract shapes (not a vehicle).
+- Vehicle portfolio on the home page: Ferrari 488 GTB card opens the explorer; Lamborghini/Maserati shown as not started.
+- 3D workbench driven by licensed-asset mesh bindings: rotate, zoom, two-way sync between model and parts list,
+  isolate, hide/show, frame, reset, and step-by-step or selected-assembly-only disassembly (`explode_step`).
+  Exercised on `/dev/viewer-fixture` with abstract shapes and test labels (not a vehicle).
+- Asset intake check: `./bin/atlas-api glb-meshes model.glb` lists named mesh nodes and prints draft bindings
+  (no assembly, part or offsets filled in). A model is public only if its `mesh_node_count` is at least 2, so a
+  single-mesh car cannot drive the explorer.
 
 ## Accuracy rules (enforced in the API)
 

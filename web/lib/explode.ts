@@ -36,3 +36,49 @@ export function lerpVec(a: Vec3, b: Vec3, t: number): Vec3 {
 export function easeInOut(t: number): number {
   return t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2;
 }
+
+/** What the visitor has selected: an assembly, optionally narrowed to one part. */
+export interface Selection { code: string | null; partId: number | null }
+
+/** Meshes to highlight: the part's own meshes when a bound part is chosen, else the assembly's. */
+export function meshesForSelection(bindings: MeshBinding[], sel: Selection): Set<string> {
+  if (sel.partId !== null) {
+    const own = bindings.filter((b) => b.partId === sel.partId).map((b) => b.meshName);
+    if (own.length) return new Set(own);
+  }
+  return meshesForCode(bindings, sel.code);
+}
+
+/** Selection implied by clicking a mesh, or null when the mesh is unbound. */
+export function selectionForMesh(bindings: MeshBinding[], meshName: string): Selection | null {
+  const b = bindings.find((x) => x.meshName === meshName);
+  if (!b || (b.assemblyCode === null && b.partId === null)) return null;
+  return { code: b.assemblyCode, partId: b.partId };
+}
+
+/**
+ * Ordered disassembly steps recorded for the asset. Meshes without a recorded
+ * step move together in one final step, so nothing is silently reordered.
+ */
+export function explodeSteps(bindings: MeshBinding[]): number[] {
+  const moving = bindings.filter((b) => b.explode);
+  const steps = [...new Set(moving.map((b) => b.explodeStep).filter((s): s is number => typeof s === "number"))].sort((a, b) => a - b);
+  if (moving.some((b) => typeof b.explodeStep !== "number")) steps.push(steps.length ? steps[steps.length - 1] + 1 : 1);
+  return steps;
+}
+
+/**
+ * Meshes that should be pulled out. `level` is how many steps are applied
+ * (0 = assembled). With `only`, the explode is limited to those meshes.
+ */
+export function explodedMeshes(bindings: MeshBinding[], level: number, only: Set<string> | null): Set<string> {
+  const steps = explodeSteps(bindings);
+  if (level <= 0 || steps.length === 0) return new Set();
+  const finalStep = steps[steps.length - 1];
+  const limit = steps[Math.min(level, steps.length) - 1];
+  return new Set(
+    bindings
+      .filter((b) => b.explode && (b.explodeStep ?? finalStep) <= limit && (!only || only.has(b.meshName)))
+      .map((b) => b.meshName),
+  );
+}

@@ -1,11 +1,13 @@
 "use client";
 import dynamic from "next/dynamic";
 import Link from "next/link";
-import { useDeferredValue, useEffect, useMemo, useState } from "react";
+import { useCallback, useDeferredValue, useEffect, useMemo, useRef, useState } from "react";
 import { api, type Assembly, type AssemblyDetail, type VehicleDetail } from "@/lib/api";
 import { shortlist, useShortlist } from "@/lib/shortlist";
 import { Schematic, SCHEMATIC_REGIONS } from "./Schematic";
 import { Known, ProvenanceNote, StatusPill } from "./Status";
+import { ModelControls, useModelState } from "./ModelControls";
+import { selectionForMesh, type Selection } from "@/lib/explode";
 
 const Viewer3D = dynamic(() => import("./Viewer3D"), { ssr: false, loading: () => <div className="viewer-canvas" /> });
 
@@ -14,13 +16,24 @@ interface Props { vehicle: VehicleDetail; assemblies: Assembly[]; initialCode: s
 export default function Explorer({ vehicle, assemblies, initialCode }: Props) {
   const [query, setQuery] = useState("");
   const [system, setSystem] = useState("");
-  const [code, setCode] = useState<string | null>(initialCode ?? "0001");
+  const [sel, setSel] = useState<Selection>({ code: initialCode ?? "0001", partId: null });
+  const code = sel.code;
+  const setCode = useCallback((c: string | null) => setSel({ code: c, partId: null }), []);
   const [exploded, setExploded] = useState(false);
+  const fromModel = useRef(false);
+  const groupsRef = useRef<HTMLDivElement>(null);
   const [detail, setDetail] = useState<AssemblyDetail | null>(null);
   const [loadError, setLoadError] = useState(false);
   const q = useDeferredValue(query.trim().toLowerCase());
   const model = vehicle.model3d;
   const source = useMemo(() => (model ? { type: "url" as const, url: model.url } : null), [model]);
+  const bindings = useMemo(() => model?.bindings ?? [], [model]);
+  const m = useModelState(bindings, sel);
+  const boundParts = useMemo(() => new Set(bindings.map((b) => b.partId).filter((x): x is number => x !== null)), [bindings]);
+  const pickMesh = useCallback((name: string) => {
+    const s = selectionForMesh(bindings, name);
+    if (s) { fromModel.current = true; setSel(s); }
+  }, [bindings]);
 
   const visible = useMemo(
     () => assemblies.filter((a) => (!system || a.systemSlug === system) && (!q || a.code.includes(q) || a.name.toLowerCase().includes(q))),
@@ -40,6 +53,15 @@ export default function Explorer({ vehicle, assemblies, initialCode }: Props) {
     return () => { live = false; };
   }, [code, vehicle.slug]);
 
+  // A pick in the 3D model scrolls the matching group into view in the list.
+  useEffect(() => {
+    if (!fromModel.current) return;
+    fromModel.current = false;
+    groupsRef.current?.querySelector('[aria-pressed="true"]')?.scrollIntoView({ block: "nearest", behavior: "smooth" });
+  }, [sel]);
+  const selectedPart = detail?.code === code ? detail?.parts.find((p) => p.id === sel.partId) : undefined;
+  const selectionLabel = selected ? (selectedPart ? `${selectedPart.name} (${selected.code})` : `${selected.code} · ${selected.name}`) : null;
+
   return (
     <>
       <div className="explorer">
@@ -51,8 +73,10 @@ export default function Explorer({ vehicle, assemblies, initialCode }: Props) {
                 <span className="pill verified">Licensed 3D · {model.licensor}</span>
                 {!model.isRealVehicleGeometry && <span className="pill unverified">Stylised — not exact vehicle geometry</span>}
               </div>
-              <Viewer3D source={source} bindings={model.bindings} selectedCode={code} exploded={exploded}
-                onSelectCode={setCode} label={`3D model of the ${vehicle.make} ${vehicle.model}. Drag to rotate, scroll to zoom.`} />
+              <Viewer3D source={source} bindings={bindings} label={`3D model of the ${vehicle.make} ${vehicle.model}. Drag to rotate, scroll to zoom; use the lists for keyboard selection.`}
+                highlighted={m.highlighted} exploded={m.exploded} hidden={m.hidden} isolate={m.isolate}
+                focusNonce={m.focusNonce} resetNonce={m.resetNonce} onPickMesh={pickMesh} />
+              <ModelControls m={m} selectionLabel={selectionLabel} />
             </>
           ) : (
             <div className="viewer-canvas">
@@ -67,20 +91,25 @@ export default function Explorer({ vehicle, assemblies, initialCode }: Props) {
               </div>
             </div>
           )}
-          <div className="viewer-foot">
+          {!model && <div className="viewer-foot">
             <div className="segmented" role="group" aria-label="View mode">
               <button type="button" aria-pressed={!exploded} onClick={() => setExploded(false)}>Assembled</button>
-              <button type="button" aria-pressed={exploded} onClick={() => setExploded(true)}>{model ? "Exploded" : "Separated"}</button>
+              <button type="button" aria-pressed={exploded} onClick={() => setExploded(true)}>Separated</button>
             </div>
             <div className="systems" aria-label="Quick select">
               {SCHEMATIC_REGIONS.map((r) => (
                 <button key={r.code} type="button" className="chip" aria-pressed={code === r.code} onClick={() => setCode(r.code)}>{r.label}</button>
               ))}
             </div>
-          </div>
+            <p className="help locked-tools">
+              Isolate, hide/show and step-by-step disassembly switch on with a licensed, part-separated model.{" "}
+              <Link href="/dev/viewer-fixture">Try them on the abstract test fixture →</Link>
+            </p>
+          </div>}
         </section>
 
-        <DetailPanel slug={vehicle.slug} assembly={selected} detail={detail?.code === code ? detail : null} error={loadError} />
+        <DetailPanel slug={vehicle.slug} assembly={selected} detail={detail?.code === code ? detail : null} error={loadError}
+          boundParts={boundParts} selectedPartId={sel.partId} onSelectPart={(id) => code && setSel({ code, partId: id })} />
       </div>
 
       <section className="card catalog" aria-labelledby="list-h">
@@ -100,7 +129,7 @@ export default function Explorer({ vehicle, assemblies, initialCode }: Props) {
           {(query || system) && <button type="button" className="btn" onClick={() => { setQuery(""); setSystem(""); }}>Clear</button>}
         </div>
         <p className="result-count" aria-live="polite">{visible.length} of {assemblies.length} assembly groups</p>
-        <div className="groups">
+        <div className="groups" ref={groupsRef}>
           {visible.map((a) => (
             <button key={a.code} type="button" className="group" aria-pressed={a.code === code}
               onClick={() => { setCode(a.code); if (window.innerWidth < 1000) document.getElementById("detail")?.scrollIntoView({ behavior: "smooth" }); }}>
@@ -115,7 +144,12 @@ export default function Explorer({ vehicle, assemblies, initialCode }: Props) {
   );
 }
 
-function DetailPanel({ slug, assembly, detail, error }: { slug: string; assembly: Assembly | null; detail: AssemblyDetail | null; error: boolean }) {
+interface DetailProps {
+  slug: string; assembly: Assembly | null; detail: AssemblyDetail | null; error: boolean;
+  boundParts: Set<number>; selectedPartId: number | null; onSelectPart: (id: number | null) => void;
+}
+
+function DetailPanel({ slug, assembly, detail, error, boundParts, selectedPartId, onSelectPart }: DetailProps) {
   const items = useShortlist();
   if (!assembly) return <aside className="card detail" id="detail"><p className="muted">Select an assembly group.</p></aside>;
   const inList = items.some((x) => x.kind === "assembly" && x.ref === assembly.code);
@@ -144,14 +178,18 @@ function DetailPanel({ slug, assembly, detail, error }: { slug: string; assembly
       )}
       {parts.length > 0 && (
         <table className="parts-table">
-          <thead><tr><th>Ref</th><th>Part</th><th>Qty</th><th>Status</th></tr></thead>
+          <thead><tr><th>Ref</th><th>Part</th><th>Qty</th><th>Status</th><th>3D</th></tr></thead>
           <tbody>
             {parts.map((p) => (
-              <tr key={`${p.id}-${p.diagramRef}`}>
+              <tr key={`${p.id}-${p.diagramRef}`} aria-selected={selectedPartId === p.id} className={selectedPartId === p.id ? "is-selected" : undefined}>
                 <td className="mono">{p.diagramRef ?? "—"}</td>
                 <td><Link href={`/parts/${p.id}`}>{p.name}</Link><div className="mono muted" style={{ fontSize: 11 }}>{p.oemPartNumber ?? "OEM no. not verified"}</div></td>
                 <td>{p.quantity ?? "—"}</td>
                 <td><StatusPill status={p.provenance.verificationStatus} /></td>
+                <td>{boundParts.has(p.id)
+                  ? <button type="button" className="btn small" aria-pressed={selectedPartId === p.id}
+                      onClick={() => onSelectPart(selectedPartId === p.id ? null : p.id)}>{selectedPartId === p.id ? "Shown" : "Show"}</button>
+                  : <span className="muted" title="No mesh bound to this part yet">—</span>}</td>
               </tr>
             ))}
           </tbody>
