@@ -1,20 +1,60 @@
 # 3dcars — Ferrari 488 GTB parts atlas
 
 First milestone for the automotive parts research experience: Ferrari 488 GTB.
+Lamborghini and Maserati are **not started** until the Ferrari milestone is reviewed.
 
-## Current implementation
+## Stack
 
-- Responsive, static browser prototype in `index.html`.
-- Search and filter over 95 assembly-group titles from the public Eurospares Ferrari 488 GTB (USA) parts-diagram index.
-- Clickable system schematic and selectable assembly-group details.
-- Browser-local research shortlist.
-- Ferrari model facts linked to the Ferrari prospectus.
-- Explicit labels that the drawing is an original schematic, not Ferrari OEM geometry or a real exploded 3D CAD model.
-- Explicit data-status labels: assembly-group names are indexed; individual part-level OEM specs and VIN fitment are not populated.
+| Part | Path | Notes |
+|---|---|---|
+| Frontend | `web/` | Next.js 16 (App Router), three.js viewer |
+| API | `api/` | Go 1.22, `net/http` + pgx |
+| Database | `db/` | PostgreSQL 16 — migrations + provenance seed |
+| Original prototype | `legacy/prototype.html` | Untouched static version |
+
+See [docs/MIGRATION.md](docs/MIGRATION.md) for how the prototype maps to the new stack.
+
+## What works
+
+- Explorer: schematic navigation, assembly search/filter by name, number and system, synced detail panel with provenance.
+- Catalog search page (server-rendered, shareable URLs) for parts and assemblies.
+- Part detail page (specs, fitment, assembly membership), shown once parts exist.
+- Quote list (browser-local) and quote request form (stored for manual follow-up — no pricing/checkout).
+- Sources & data-gaps page.
+- Admin CMS: sign-in, create/edit/delete for sources, vehicles, facts, model years, assemblies, parts, links, specs, fitments, media/3D assets, mesh bindings, data gaps, quote status.
+- 3D viewer (rotate, zoom, select by mesh, exploded view) driven by licensed-asset mesh bindings; exercised on `/dev/viewer-fixture` with abstract shapes (not a vehicle).
+
+## Accuracy rules (enforced in the API)
+
+- Assembly group titles are `publicly_listed` (public retailer index), never `verified`.
+- `verified` is refused unless the source is OEM-authorized or licensed (manufacturer publications can verify model-level facts only).
+- A 3D asset is shown only with a verified commercial licence, licensor, licence name and an approval date.
+- Only the Ferrari 488 GTB may be an active vehicle.
+- No parts, specs, fitments, model years or 3D assets are seeded — they require authorized/licensed sources.
 
 ## Run locally
 
-Open `index.html` in a modern browser. No build system is required for this prototype.
+```bash
+docker compose up -d --wait                       # Postgres on 127.0.0.1:5440
+
+cd api
+export DATABASE_URL=postgres://atlas:atlas_dev_only@127.0.0.1:5440/atlas
+go build -o bin/atlas-api ./cmd/atlas-api
+./bin/atlas-api migrate                           # schema + seed
+ADMIN_EMAIL=you@example.com ADMIN_PASSWORD='12+ chars' ./bin/atlas-api create-admin
+./bin/atlas-api serve                             # http://127.0.0.1:8088
+
+cd ../web
+npm ci
+npm run dev                                       # http://localhost:3020
+```
+
+## Checks
+
+```bash
+cd api && go vet ./... && TEST_ADMIN_DATABASE_URL=postgres://atlas:atlas_dev_only@127.0.0.1:5440/postgres go test ./...
+cd web && npm run typecheck && npm run lint && npm test && npm run build
+```
 
 ## Sources
 
@@ -22,6 +62,5 @@ Open `index.html` in a modern browser. No build system is required for this prot
 - Ferrari TechInfo: https://techinfo.ferrari.com/
 - Public 488 GTB (USA) diagram index: https://www.eurospares.com/ferrari/488/488-gtb-usa/part-diagrams
 
-## Production work still needed
-
-See [CLAUDE_HANDOFF.md](CLAUDE_HANDOFF.md). The current prototype is not an online store, does not call a Go API, has no PostgreSQL database or admin CMS, and does not contain licensed vehicle CAD or a complete VIN-specific OEM spare-parts catalog.
+Independent project — not affiliated with, endorsed by, or sponsored by Ferrari.
+Remaining OEM-data, VIN and licensing work is listed in [CLAUDE_HANDOFF.md](CLAUDE_HANDOFF.md) and on the site's Sources page.
