@@ -148,6 +148,7 @@ var All = []Resource{
 		{Name: "is_real_vehicle_geometry", Label: "Real vehicle geometry", Kind: Bool, Help: "True only if the asset reproduces the actual car (scan/CAD/accurate model)."},
 		{Name: "source_id", Label: "Source", Kind: Ref, RefTable: "sources"},
 		{Name: "notes", Label: "Notes", Kind: LongText},
+		{Name: "mesh_node_count", Label: "Named mesh nodes in file", Kind: Int, Help: "From `atlas-api glb-meshes <file>`. A single-mesh car cannot drive the parts explorer."},
 		{Name: "approved_at", Label: "Approved at", Kind: Date, Help: "Set only after the owner approves the licence."},
 	}},
 	{Name: "asset_mesh_bindings", Label: "3D mesh bindings", Table: "asset_mesh_bindings", ListOrder: "asset_id, mesh_name", Fields: []Field{
@@ -158,6 +159,7 @@ var All = []Resource{
 		{Name: "explode_x", Label: "Explode X", Kind: Float},
 		{Name: "explode_y", Label: "Explode Y", Kind: Float},
 		{Name: "explode_z", Label: "Explode Z", Kind: Float},
+		{Name: "explode_step", Label: "Disassembly step (1 = first out)", Kind: Int},
 		{Name: "notes", Label: "Notes (where offsets came from)", Kind: LongText},
 	}},
 	{Name: "data_gaps", Label: "Data gaps", Table: "data_gaps", ListOrder: "vehicle_id, sort_order", Fields: []Field{

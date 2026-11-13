@@ -59,6 +59,7 @@ type MeshBinding struct {
 	AssemblyCode *string     `json:"assemblyCode"`
 	PartID       *int64      `json:"partId"`
 	Explode      *[3]float64 `json:"explode"`
+	ExplodeStep  *int        `json:"explodeStep"`
 }
 
 type Asset3D struct {
@@ -190,7 +191,7 @@ func (s *Store) licensedModel(ctx context.Context, vehicleID int64) (*Asset3D, e
 		FROM media_assets
 		WHERE vehicle_id=$1 AND kind='model_3d' AND license_status='licensed_verified'
 		  AND commercial_use_permitted IS TRUE AND is_real_vehicle_geometry IS NOT NULL
-		  AND approved_at IS NOT NULL AND url IS NOT NULL AND licensor IS NOT NULL AND license_name IS NOT NULL
+		  AND approved_at IS NOT NULL AND mesh_node_count >= 2 AND url IS NOT NULL AND licensor IS NOT NULL AND license_name IS NOT NULL
 		ORDER BY approved_at DESC LIMIT 1`, vehicleID).
 		Scan(&a.ID, &a.Title, &a.URL, &a.Licensor, &a.LicenseName, &a.LicenseURL, &a.IsRealVehicleGeometry)
 	if errors.Is(err, pgx.ErrNoRows) {
@@ -199,7 +200,7 @@ func (s *Store) licensedModel(ctx context.Context, vehicleID int64) (*Asset3D, e
 	if err != nil {
 		return nil, err
 	}
-	rows, err := s.DB.Query(ctx, `SELECT b.mesh_name, a.code, b.part_id, b.explode_x, b.explode_y, b.explode_z
+	rows, err := s.DB.Query(ctx, `SELECT b.mesh_name, a.code, b.part_id, b.explode_x, b.explode_y, b.explode_z, b.explode_step
 		FROM asset_mesh_bindings b LEFT JOIN assemblies a ON a.id=b.assembly_id
 		WHERE b.asset_id=$1 ORDER BY b.mesh_name`, a.ID)
 	if err != nil {
@@ -208,7 +209,7 @@ func (s *Store) licensedModel(ctx context.Context, vehicleID int64) (*Asset3D, e
 	a.Bindings, err = pgx.CollectRows(rows, func(r pgx.CollectableRow) (MeshBinding, error) {
 		var b MeshBinding
 		var x, y, z *float64
-		err := r.Scan(&b.MeshName, &b.AssemblyCode, &b.PartID, &x, &y, &z)
+		err := r.Scan(&b.MeshName, &b.AssemblyCode, &b.PartID, &x, &y, &z, &b.ExplodeStep)
 		if x != nil && y != nil && z != nil {
 			b.Explode = &[3]float64{*x, *y, *z}
 		}

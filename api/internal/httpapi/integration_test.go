@@ -220,13 +220,22 @@ func TestAdminFlow(t *testing.T) {
 	if code, v = c.do("PUT", "/api/v1/admin/r/media_assets/"+jsonNum(assetID), asset); code != 200 {
 		t.Fatalf("approve: %d %v", code, v)
 	}
+	// A licensed file without separately named meshes cannot drive the explorer.
+	if _, v = c.do("GET", "/api/v1/vehicles/ferrari-488-gtb", nil); v["model3d"] != nil {
+		t.Fatal("asset without a mesh inventory leaked to public")
+	}
+	asset["mesh_node_count"] = 24
+	if code, v = c.do("PUT", "/api/v1/admin/r/media_assets/"+jsonNum(assetID), asset); code != 200 {
+		t.Fatalf("mesh count: %d %v", code, v)
+	}
 	if code, v = c.do("POST", "/api/v1/admin/r/asset_mesh_bindings", map[string]any{"asset_id": assetID, "mesh_name": "wheel_fl", "assembly_id": wheels,
-		"explode_x": 0, "explode_y": 0, "explode_z": 0.4}); code != 201 {
+		"explode_x": 0, "explode_y": 0, "explode_z": 0.4, "explode_step": 2}); code != 201 {
 		t.Fatalf("binding: %d %v", code, v)
 	}
 	_, v = c.do("GET", "/api/v1/vehicles/ferrari-488-gtb", nil)
 	m := v["model3d"].(map[string]any)
-	if m["isRealVehicleGeometry"] != false || len(m["bindings"].([]any)) != 1 {
+	if m["isRealVehicleGeometry"] != false || len(m["bindings"].([]any)) != 1 ||
+		m["bindings"].([]any)[0].(map[string]any)["explodeStep"] != float64(2) {
 		t.Fatalf("model3d: %v", m)
 	}
 
