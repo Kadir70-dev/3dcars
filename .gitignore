@@ -1,0 +1,10 @@
+node_modules/
+.next/
+out/
+*.log
+.env
+.env.*
+!.env.example
+api/bin/
+web/next-env.d.ts
+web/tsconfig.tsbuildinfo
