@@ -105,20 +105,12 @@ export const EXTERIOR_PARTS: ExteriorPart[] = [
   { mesh: "ext_screen_frame", name: "Windscreen frame & A-pillars", system: "EXT-BODY", source: "body", rule: at([0, 1.02, -0.49]), explode: up(1.0, -0.4) },
 ];
 
-/** Split rules per source mesh, derived from EXTERIOR_PARTS. */
-export const EXTERIOR_SPLITS: Record<string, IslandRule[]> = {};
-for (const p of EXTERIOR_PARTS) {
-  if (!p.rule) continue;
-  (EXTERIOR_SPLITS[p.source] ??= []).push({ name: p.mesh, ...p.rule });
-}
-
 /** Exterior components a parts explorer would expect but this model does not contain as separate geometry. */
 export const EXTERIOR_MISSING: { component: string; note: string }[] = [
   { component: "Side windows (door glass)", note: "No door-glass geometry in the file (the windows appear to be modelled down or absent)." },
   { component: "Door handles", note: "Only a small unlabelled piece behind each door; not identifiable as a handle." },
   { component: "Mirror glass", note: "Not separate from the mirror housing." },
   { component: "Hinges, latches, seals", note: "Not modelled." },
-  { component: "Front splitter / rear diffuser", note: "Part of the bumper geometry; cannot be separated without cutting geometry." },
   { component: "Roof / folding hard-top", note: "No separate roof panel; the area behind the seats is one panel." },
   { component: "Fuel filler flap, number-plate mounts, washer jets", note: "Not modelled as separate pieces." },
   { component: "Individual LED segments / bulbs", note: "Grouped per lamp; no bulb-level geometry." },

@@ -3,6 +3,7 @@ import Link from "next/link";
 import Workbench from "@/components/Workbench";
 import { DEMO458_ATTRIBUTION as A } from "@/lib/demo458";
 import { EXTERIOR_MISSING, EXTERIOR_PARTS } from "@/lib/demo458Exterior";
+import { EXTERIOR_FROM_INTERIOR_AUDIT, INTERIOR_MISSING, INTERIOR_PARTS } from "@/lib/demo458Interior";
 
 export const metadata: Metadata = {
   title: "3D workbench demo — community Ferrari 458 model",
@@ -18,18 +19,18 @@ export default function Page() {
         <h1>Take it <em>apart.</em></h1>
         <p>Rotate, zoom, pick a part on the car or in the list, isolate it, hide it, and disassemble the car step by step.
           <b> This is a free community model of a Ferrari 458 Italia, not the 488 GTB.</b> Exterior components (doors, panels,
-          bumpers, bonnet, mirrors, glass, lamps, grilles) are the model’s own separate geometry pieces, named by where they sit —
-          not Ferrari part data. Filter by system, inspect a component, or isolate it. The licensed 488 GTB will use this same workbench.</p>
+          bumpers, bonnet, mirrors, glass, lamps, grilles) and interior components (seats, door cards, console, dashboard, cabin
+          trim, structure) are the model’s own separate geometry pieces, named by where they sit — not Ferrari part data. Filter by system, inspect a component, or isolate it. The licensed 488 GTB will use this same workbench.</p>
       </header>
       <Workbench preset="demo458" />
       <section className="section" style={{ paddingTop: 40 }} aria-labelledby="missing-h">
         <div className="section-head" style={{ marginBottom: 16 }}>
-          <div><div className="eyebrow">Phase 2 · exterior audit</div><h2 id="missing-h" style={{ fontSize: 30, marginTop: 8 }}>Not in this model</h2></div>
-          <p>{EXTERIOR_PARTS.length} exterior components are separate pieces of this model’s own geometry. These expected components are not,
-            so they are listed here instead of being invented.</p>
+          <div><div className="eyebrow">Exterior &amp; interior audit</div><h2 id="missing-h" style={{ fontSize: 30, marginTop: 8 }}>Not in this model</h2></div>
+          <p>{EXTERIOR_PARTS.length + EXTERIOR_FROM_INTERIOR_AUDIT.length} exterior and {INTERIOR_PARTS.length} interior components are separate
+            pieces of this model’s own geometry. These expected components are not, so they are listed here instead of being invented.</p>
         </div>
         <div className="missing-grid">
-          {EXTERIOR_MISSING.map((x) => (
+          {[...EXTERIOR_MISSING, ...INTERIOR_MISSING].map((x) => (
             <div className="card row-card" key={x.component}>
               <header><h3>{x.component}</h3><span className="pill source_required">Not in model</span></header>
               <p>{x.note}</p>

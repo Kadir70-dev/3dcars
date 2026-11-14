@@ -26,7 +26,7 @@ const PRESETS = {
     systems: DEMO458_SYSTEMS,
     tag: "Community 458 Italia model · CC BY 4.0 · not the 488 GTB · not OEM", listTitle: "Parts in disassembly order",
     label: "Community 3D model of a Ferrari 458 Italia. Drag to rotate, scroll to zoom; use the list for keyboard selection.",
-    note: "Exterior components are the model’s own separate geometry pieces, named by where they sit on the car. Order, steps of 10 and offsets are a demo — no OEM numbers, quantities or fitment.",
+    note: "Exterior and interior components are the model’s own separate geometry pieces, named by where they sit in the car. Order, steps of 10 and offsets are a demo — no OEM numbers, quantities or fitment.",
     inspectNote: "Identified by its position in this community model; not a Ferrari part name or number.",
   },
 } as const;
