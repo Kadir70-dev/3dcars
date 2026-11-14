@@ -67,7 +67,19 @@ export class ApiError extends Error {
 
 const base = () => (typeof window === "undefined" ? process.env.API_URL ?? "http://127.0.0.1:8088" : "");
 
+/** True when the site runs without the Go API and serves the exported snapshot instead. */
+export const STATIC_DATA = process.env.NEXT_PUBLIC_STATIC_DATA === "1";
+
 export async function api<T>(path: string, init?: RequestInit & { revalidate?: number }): Promise<T> {
+  if (STATIC_DATA && (!init?.method || init.method === "GET")) {
+    const { staticApi, StaticApiError } = await import("./staticApi");
+    try {
+      return await staticApi<T>(path);
+    } catch (e) {
+      if (e instanceof StaticApiError) throw new ApiError(e.status, e.message);
+      throw e;
+    }
+  }
   const { revalidate, ...rest } = init ?? {};
   const res = await fetch(base() + "/api/v1" + path, {
     ...rest,

@@ -2,6 +2,10 @@
 import Link from "next/link";
 import { useState } from "react";
 import { shortlist, useShortlist } from "@/lib/shortlist";
+import { STATIC_DATA } from "@/lib/api";
+
+/** Enquiries go to the client's published address when the site runs without the API. */
+const ENQUIRY_EMAIL = "info@autovivo.it";
 
 type Errors = Record<string, string>;
 
@@ -11,11 +15,25 @@ export default function QuotePage() {
   const [busy, setBusy] = useState(false);
   const [done, setDone] = useState<{ id: number; note: string } | null>(null);
   const [failed, setFailed] = useState<string | null>(null);
+  const [mailed, setMailed] = useState(false);
+
+  function emailEnquiry(f: FormData) {
+    const name = String(f.get("name") ?? "").trim();
+    if (!name) { setErrors({ name: "Please enter your name." }); return; }
+    const lines = [
+      "Hello Autovivo,", "", "I would like a quote for these parts:", ...items.map((it) => `- ${it.label}`), "",
+      `Name: ${name}`, f.get("vin") ? `VIN: ${f.get("vin")}` : "", f.get("message") ? `\n${f.get("message")}` : "",
+    ].filter((l) => l !== "");
+    window.location.href = `mailto:${ENQUIRY_EMAIL}?subject=${encodeURIComponent("Parts enquiry")}&body=${encodeURIComponent(lines.join("\n"))}`;
+    setMailed(true);
+  }
 
   async function submit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     const f = new FormData(e.currentTarget);
-    setBusy(true); setFailed(null); setErrors({});
+    setFailed(null); setErrors({});
+    if (STATIC_DATA) { emailEnquiry(f); return; }
+    setBusy(true);
     try {
       const res = await fetch("/api/v1/quotes", {
         method: "POST",
@@ -79,8 +97,11 @@ export default function QuotePage() {
             <label>Message (optional)<textarea className="field" name="message" maxLength={2000} /></label>
             {errors.items && <p className="err">{errors.items}</p>}
             {failed && <p className="err-box" role="alert">{failed}</p>}
-            <button className="btn primary" type="submit" disabled={busy || items.length === 0}>{busy ? "Sending…" : "Send quote request"}</button>
-            <p className="help">We store your name, email, optional VIN and message to reply to this request. No automatic email is sent yet.</p>
+            {mailed && <p className="ok-box" role="status">Your email app should now show the enquiry addressed to {ENQUIRY_EMAIL}. Send it from there.</p>}
+            <button className="btn primary" type="submit" disabled={busy || items.length === 0}>{busy ? "Sending…" : STATIC_DATA ? "Email the enquiry" : "Send quote request"}</button>
+            <p className="help">{STATIC_DATA
+              ? `Opens your email app with the list addressed to ${ENQUIRY_EMAIL}; nothing is sent or stored by this site.`
+              : "We store your name, email, optional VIN and message to reply to this request. No automatic email is sent yet."}</p>
           </form>
         </div>
       )}
