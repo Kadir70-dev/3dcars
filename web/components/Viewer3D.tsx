@@ -40,6 +40,12 @@ interface Props {
   onMoving?: (meshName: string) => void;
   /** Called once the model is ready with geometry facts per bound mesh (for inspection panels). */
   onStats?: (stats: Record<string, MeshStats>) => void;
+  /** Called when a click lands on empty space or an unbound mesh. */
+  onPickNothing?: () => void;
+  /** Delay between parts leaving one by one (ms). */
+  staggerMs?: number;
+  /** Hide the zoom / reset buttons (gestures still work). */
+  bare?: boolean;
 }
 
 export interface MeshStats { triangles: number; sourceMesh: string; islands: number | null }
@@ -80,13 +86,14 @@ export default function Viewer3D(props: Props) {
   const labelsRef = useRef(props.labels);
   const movingRef = useRef(props.onMoving);
   const statsRef = useRef(props.onStats);
+  const nothingRef = useRef(props.onPickNothing);
   const host = useRef<HTMLDivElement>(null);
   const rt = useRef<Runtime | null>(null);
   const pickRef = useRef(onPickMesh);
   const [state, setState] = useState<"loading" | "ready" | "error">("loading");
   const [missing, setMissing] = useState<string[]>([]);
 
-  useEffect(() => { pickRef.current = onPickMesh; movingRef.current = props.onMoving; }, [onPickMesh, props.onMoving]);
+  useEffect(() => { pickRef.current = onPickMesh; movingRef.current = props.onMoving; nothingRef.current = props.onPickNothing; }, [onPickMesh, props.onMoving, props.onPickNothing]);
   useEffect(() => {
     look.current = { s: { focus: props.labelFocus ?? new Set(), showAll: Boolean(props.showAllLabels), hover: rt.current?.hover ?? null }, lit: highlighted, hidden };
   }, [props.labelFocus, props.showAllLabels, highlighted, hidden]);
@@ -152,10 +159,12 @@ export default function Viewer3D(props: Props) {
       const center = box.getCenter(new THREE.Vector3());
       camera.near = size / 100;
       camera.far = size * 20;
-      camera.position.copy(center).add(new THREE.Vector3(size * 0.78, size * 0.38, size * 0.92));
+      // Narrow (portrait) screens need the camera further back so the whole car fits across.
+      const fit = camera.aspect < 1.2 ? 1.2 / camera.aspect : 1;
+      camera.position.copy(center).add(new THREE.Vector3(size * 0.78, size * 0.38, size * 0.92).multiplyScalar(fit));
       controls.target.copy(center);
       controls.minDistance = size * 0.04;
-      controls.maxDistance = size * 3;
+      controls.maxDistance = size * 3 * fit;
       camera.updateProjectionMatrix();
       const worldTargets = explodeTargets(bindings, [...bound.keys()]);
       const lbl = labelsRef.current;
@@ -207,9 +216,10 @@ export default function Viewer3D(props: Props) {
       for (const hit of ray.intersectObjects(scene.children, true)) {
         const info = byMesh.get(hit.object as THREE.Mesh);
         if (!info || !isShown(info.mesh)) continue;
-        if (info.owner) pickRef.current(info.owner);
+        if (info.owner) pickRef.current(info.owner); else nothingRef.current?.();
         return;
       }
+      nothingRef.current?.();
     };
     // Hover shows the name of the part under the pointer (one raycast per frame at most).
     let hoverAt: THREE.Vector2 | null = null;
@@ -307,7 +317,7 @@ export default function Viewer3D(props: Props) {
     const order = bindings.map((b) => b.meshName).filter((n) => r.bound.has(n));
     const out = order.filter((n) => exploded.has(n) && r.want.get(n) !== 1);
     const back = order.filter((n) => !exploded.has(n) && r.want.get(n) !== 0).reverse();
-    const gap = window.matchMedia("(prefers-reduced-motion: reduce)").matches ? 0 : GAP_MS;
+    const gap = window.matchMedia("(prefers-reduced-motion: reduce)").matches ? 0 : (props.staggerMs ?? GAP_MS);
     out.forEach((n, i) => { r.want.set(n, 1); r.startAt.set(n, now + i * gap); });
     back.forEach((n, i) => { r.want.set(n, 0); r.startAt.set(n, now + i * gap * 0.35); });
     // Pull the camera back while parts are out so they stay in frame; return when reassembled.
@@ -318,7 +328,7 @@ export default function Viewer3D(props: Props) {
     } else if (exploded.size === 0 && back.length) {
       r.tween = { fromPos: r.camera.position.clone(), toPos: r.home.pos.clone(), fromTarget: r.controls.target.clone(), toTarget: r.home.target.clone(), t: 0 };
     }
-  }, [exploded, state, bindings]);
+  }, [exploded, state, bindings, props.staggerMs]);
 
   // Highlight, isolate (ghost everything else) and hide.
   useEffect(() => {
@@ -361,11 +371,11 @@ export default function Viewer3D(props: Props) {
 
   return (
     <div className="viewer-canvas" ref={host} role="region" aria-label={label}>
-      <div className="viewer-toolbar">
+      {!props.bare && <div className="viewer-toolbar">
         <button className="icon-btn" type="button" onClick={() => zoom(0.8)} aria-label="Zoom in">+</button>
         <button className="icon-btn" type="button" onClick={() => zoom(1.25)} aria-label="Zoom out">−</button>
         <button className="icon-btn" type="button" onClick={home} aria-label="Reset camera">⟲</button>
-      </div>
+      </div>}
       {state === "loading" && <p className="asset-gate" role="status">Loading model…</p>}
       {state === "error" && <p className="asset-gate" role="alert">The 3D model could not be loaded. Use the parts list instead.</p>}
       {state === "ready" && missing.length > 0 && (

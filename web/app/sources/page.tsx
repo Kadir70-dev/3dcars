@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { api, VEHICLE, type Source, type VehicleDetail } from "@/lib/api";
 import { ApiDown } from "@/components/ApiDown";
+import { DEMO458_ATTRIBUTION as A } from "@/lib/demo458";
 
 // Rendered per request: Next 16.4 ISR regeneration referenced a CSS chunk missing from the build.
 export const dynamic = "force-dynamic";
@@ -65,6 +66,15 @@ export default async function Sources() {
           </div>
         </section>
       </div>
+      <section className="section" style={{ paddingTop: 40 }} aria-labelledby="credits-h">
+        <h2 id="credits-h" style={{ fontSize: 30, marginBottom: 12 }}>3D model credits</h2>
+        <p className="muted" style={{ maxWidth: 760 }}>
+          The 3D demo uses “<a href={A.sourceUrl} target="_blank" rel="noreferrer">{A.title}</a>” by {A.author}, licensed under{" "}
+          <a href={A.licenseUrl} target="_blank" rel="noreferrer">{A.license}</a>, obtained via the{" "}
+          <a href={A.via} target="_blank" rel="noreferrer">three.js examples</a> (licence checked {A.checked}). {A.changes}{" "}
+          It is a 458 Italia, not the 488 GTB, and its part names are not Ferrari data. Ferrari is a trademark of Ferrari S.p.A.
+        </p>
+      </section>
     </div>
   );
 }

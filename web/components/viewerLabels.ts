@@ -35,9 +35,11 @@ export class LabelLayer {
       el.type = "button";
       el.tabIndex = -1;
       el.className = "vlabel";
+      el.style.display = "none";
       el.textContent = text;
       el.addEventListener("click", () => onPick(name));
       const line = document.createElementNS(SVG, "line");
+      line.style.display = "none";
       this.svg.appendChild(line);
       this.root.appendChild(el);
       this.entries.push({ name, el, line });

@@ -374,3 +374,14 @@ dialog::backdrop { background: #000a; backdrop-filter: blur(3px); }
 .demo-page .inspector-kv div { border: 0; padding: 4px 0; }
 .demo-page .missing-grid .card { border: 0; background: none; padding-left: 0; padding-right: 0; }
 @media (max-width: 720px) { .workbench .viewer-tag { position: static; margin: 0 0 6px; } .workbench .viewer-tag .pill { white-space: normal; } }
+
+/* Full-screen demo: no site chrome, no frame — the car fills the window. */
+body:has(.fs-demo) .topbar, body:has(.fs-demo) header.nav, body:has(.fs-demo) .mobile-nav, body:has(.fs-demo) footer.footer { display: none; }
+body:has(.fs-demo) { overflow: hidden; }
+.fs-demo { position: fixed; inset: 0; }
+.fs-demo .viewer-canvas { position: absolute; inset: 0; aspect-ratio: auto; width: 100%; height: 100%; background: none; border-radius: 0; }
+.fs-actions { position: fixed; left: 50%; bottom: 22px; transform: translateX(-50%); z-index: 5; display: flex; gap: 8px; }
+.fs-btn { border: 1px solid #ffffff2e; background: #0b0c0dcc; color: var(--text); border-radius: 999px; padding: 7px 16px;
+  font: 600 11px var(--sans); letter-spacing: .08em; text-transform: uppercase; backdrop-filter: blur(6px); }
+.fs-btn:hover { border-color: #ffffff66; }
+.fs-btn[aria-pressed="true"] { background: var(--red); border-color: var(--red); color: #fff; }

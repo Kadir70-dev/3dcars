@@ -1,43 +1,18 @@
 import type { Metadata } from "next";
-import Link from "next/link";
-import Workbench from "@/components/Workbench";
-import { DEMO458_ATTRIBUTION as A } from "@/lib/demo458";
-import { EXTERIOR_MISSING, EXTERIOR_PARTS } from "@/lib/demo458Exterior";
-import { EXTERIOR_FROM_INTERIOR_AUDIT, INTERIOR_MISSING, INTERIOR_PARTS } from "@/lib/demo458Interior";
+import FullscreenDemo from "@/components/FullscreenDemo";
 
+// Model credit (CC BY 4.0) is on the Sources page and in /models/demo/ATTRIBUTION.txt.
 export const metadata: Metadata = {
-  title: "3D workbench demo — community Ferrari 458 model",
-  description: "Interactive exploded-view demo using a community Ferrari 458 Italia model (CC BY 4.0). Not the 488 GTB and not OEM data.",
+  title: "3D demo — community Ferrari 458 model",
+  description: "Full-screen exploded-view demo using a community Ferrari 458 Italia model (CC BY 4.0). Not the 488 GTB and not OEM data.",
   robots: { index: false, follow: false },
 };
 
 export default function Page() {
   return (
-    <div className="wrap demo-page">
-      <h1 className="sr-only">3D workbench demo — community Ferrari 458 model</h1>
-      <Workbench preset="demo458" />
-      <section className="section" style={{ paddingTop: 40 }} aria-labelledby="missing-h">
-        <div className="section-head" style={{ marginBottom: 16 }}>
-          <div><div className="eyebrow">Exterior &amp; interior audit</div><h2 id="missing-h" style={{ fontSize: 30, marginTop: 8 }}>Not in this model</h2></div>
-          <p>{EXTERIOR_PARTS.length + EXTERIOR_FROM_INTERIOR_AUDIT.length} exterior and {INTERIOR_PARTS.length} interior components are separate
-            pieces of this model’s own geometry. These expected components are not, so they are listed here instead of being invented.</p>
-        </div>
-        <div className="missing-grid">
-          {[...EXTERIOR_MISSING, ...INTERIOR_MISSING].map((x) => (
-            <div className="card row-card" key={x.component}>
-              <header><h3>{x.component}</h3><span className="pill source_required">Not in model</span></header>
-              <p>{x.note}</p>
-            </div>
-          ))}
-        </div>
-      </section>
-      <p className="help" style={{ marginTop: 16 }}>
-        “<a href={A.sourceUrl} target="_blank" rel="noreferrer">{A.title}</a>” 3D model by {A.author}, licensed under{" "}
-        <a href={A.licenseUrl} target="_blank" rel="noreferrer">{A.license}</a>, obtained via the{" "}
-        <a href={A.via} target="_blank" rel="noreferrer">three.js examples</a> (licence checked {A.checked}). {A.changes}{" "}
-        Ferrari is a trademark of Ferrari S.p.A.; this independent project is not affiliated with or endorsed by Ferrari.{" "}
-        <Link href="/vehicles/ferrari-488-gtb">Back to the 488 GTB explorer →</Link>
-      </p>
-    </div>
+    <>
+      <h1 className="sr-only">3D demo — community Ferrari 458 model (not the 488 GTB, not OEM data)</h1>
+      <FullscreenDemo />
+    </>
   );
 }
