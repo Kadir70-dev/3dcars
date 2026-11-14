@@ -45,7 +45,7 @@ export default async function Home() {
       <section className="wrap section" aria-labelledby="fleet-h">
         <div className="section-head">
           <div><div className="eyebrow">Vehicle portfolio</div><h2 id="fleet-h">Choose a <em>car.</em></h2></div>
-          <p>One vehicle at a time, finished properly. The Ferrari is in research; the others start only after the Ferrari milestone is reviewed.</p>
+          <p>One vehicle at a time, finished properly. The Ferrari is in research and the Lamborghini has a 3D demo; Maserati has not started.</p>
         </div>
         <div className="fleet">
           <Link href={`/vehicles/${v.slug}`} className="card vcard live">
@@ -61,7 +61,16 @@ export default async function Home() {
               <span className="vcard-cta">Open explorer <span aria-hidden="true">→</span></span>
             </div>
           </Link>
-          {["Lamborghini", "Maserati"].map((make) => (
+          <Link href="/demo/lamborghini" className="card vcard live">
+            <div className="vcard-stage"><span className="vcard-planned">3D demo</span></div>
+            <div className="vcard-body">
+              <div className="vcard-top"><span className="eyebrow">Lamborghini</span><span className="pill unverified">Demo model</span></div>
+              <h3>Centenario</h3>
+              <p className="muted">Community 3D model (CC BY 4.0) — not OEM data.</p>
+              <span className="vcard-cta">Open 3D demo <span aria-hidden="true">→</span></span>
+            </div>
+          </Link>
+          {["Maserati"].map((make) => (
             <div className="card vcard planned" key={make} aria-disabled="true">
               <div className="vcard-stage"><span className="vcard-planned">Planned</span></div>
               <div className="vcard-body">

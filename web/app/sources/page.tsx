@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { api, VEHICLE, type Source, type VehicleDetail } from "@/lib/api";
 import { ApiDown } from "@/components/ApiDown";
 import { DEMO458_ATTRIBUTION as A } from "@/lib/demo458";
+import { LAMBO_ATTRIBUTION as B } from "@/lib/demoLambo";
 
 // Rendered per request: Next 16.4 ISR regeneration referenced a CSS chunk missing from the build.
 export const dynamic = "force-dynamic";
@@ -73,6 +74,11 @@ export default async function Sources() {
           <a href={A.licenseUrl} target="_blank" rel="noreferrer">{A.license}</a>, obtained via the{" "}
           <a href={A.via} target="_blank" rel="noreferrer">three.js examples</a> (licence checked {A.checked}). {A.changes}{" "}
           It is a 458 Italia, not the 488 GTB, and its part names are not Ferrari data. Ferrari is a trademark of Ferrari S.p.A.
+        </p>
+        <p className="muted" style={{ maxWidth: 760 }}>
+          The Lamborghini 3D demo uses “<a href={B.sourceUrl} target="_blank" rel="noreferrer">{B.title}</a>” by {B.author}, licensed under{" "}
+          <a href={B.licenseUrl} target="_blank" rel="noreferrer">{B.license}</a> (licence checked {B.checked}). {B.changes}{" "}
+          Its part names are not Lamborghini data. Lamborghini is a trademark of Automobili Lamborghini S.p.A.
         </p>
       </section>
     </div>

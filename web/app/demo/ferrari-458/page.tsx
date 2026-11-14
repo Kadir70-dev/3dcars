@@ -12,7 +12,7 @@ export default function Page() {
   return (
     <>
       <h1 className="sr-only">3D demo — community Ferrari 458 model (not the 488 GTB, not OEM data)</h1>
-      <FullscreenDemo />
+      <FullscreenDemo preset="ferrari458" />
     </>
   );
 }

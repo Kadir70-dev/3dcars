@@ -6,22 +6,34 @@ import dynamic from "next/dynamic";
 import { useCallback, useMemo, useState } from "react";
 import { useModelState } from "@/components/ModelControls";
 import { DEMO458_BINDINGS, DEMO458_GROUPS, DEMO458_URL, tuneDemo458 } from "@/lib/demo458";
+import { LAMBO_BINDINGS, LAMBO_GROUPS, LAMBO_URL, tuneLambo } from "@/lib/demoLambo";
 import { selectionForMesh, type Selection } from "@/lib/explode";
 import type { ModelSource } from "./Viewer3D";
 
 const Viewer3D = dynamic(() => import("@/components/Viewer3D"), { ssr: false, loading: () => <div className="viewer-canvas" /> });
-const SOURCE: ModelSource = { type: "url", url: DEMO458_URL, tune: tuneDemo458 };
+// Presets live here because sources carry functions that cannot cross the server/client boundary.
+const PRESETS = {
+  ferrari458: {
+    source: { type: "url", url: DEMO458_URL, tune: tuneDemo458 } as ModelSource, bindings: DEMO458_BINDINGS, groups: DEMO458_GROUPS,
+    label: "Community 3D model of a Ferrari 458 Italia (not the 488 GTB, not OEM data).",
+  },
+  lamborghini: {
+    source: { type: "url", url: LAMBO_URL, tune: tuneLambo } as ModelSource, bindings: LAMBO_BINDINGS, groups: LAMBO_GROUPS,
+    label: "Community 3D model of a Lamborghini Centenario (not OEM data).",
+  },
+} as const;
 const NONE: Selection = { code: null, partId: null };
 /** How many of the most recent parts keep a full-size name label while the car comes apart. */
 const RECENT_LABELS = 10;
 
-export default function FullscreenDemo() {
+export default function FullscreenDemo({ preset }: { preset: keyof typeof PRESETS }) {
+  const { source, bindings, groups, label } = PRESETS[preset];
   const [sel, setSel] = useState<Selection>(NONE);
   const [recent, setRecent] = useState<string[]>([]);
-  const m = useModelState(DEMO458_BINDINGS, sel);
+  const m = useModelState(bindings, sel);
   const labels = useMemo(
-    () => Object.fromEntries(DEMO458_GROUPS.flatMap((g) => g.parts.map((p) => [p.meshName, p.name.replace(/^\d+ · /, "")]))),
-    [],
+    () => Object.fromEntries(groups.flatMap((g) => g.parts.map((p) => [p.meshName, p.name.replace(/^\d+ · /, "")]))),
+    [groups],
   );
   const focus = useMemo(() => new Set(recent), [recent]);
   const out = m.level > 0;
@@ -31,13 +43,13 @@ export default function FullscreenDemo() {
 
   return (
     <div className="fs-demo">
-      <Viewer3D source={SOURCE} bindings={DEMO458_BINDINGS} bare spin360 labelLines={false} staggerMs={90}
-        label="Community 3D model of a Ferrari 458 Italia (not the 488 GTB, not OEM data). Drag to rotate, scroll or pinch to zoom, click a part to inspect it."
+      <Viewer3D source={source} bindings={bindings} bare spin360 labelLines={false} staggerMs={90}
+        label={`${label} Drag to rotate, scroll or pinch to zoom, click a part to inspect it.`}
         highlighted={m.highlighted} exploded={m.exploded} hidden={m.hidden} isolate={m.isolate}
         focusNonce={m.focusNonce} resetNonce={m.resetNonce}
         labels={labels} labelFocus={focus} onMoving={onMoving}
         onPickMesh={(name) => {
-          const s = selectionForMesh(DEMO458_BINDINGS, name);
+          const s = selectionForMesh(bindings, name);
           if (s) { setSel(s); m.setIsolate(true); m.focus(); }
         }}
         onPickNothing={() => { if (sel.code !== null || m.isolate) clear(); }} />

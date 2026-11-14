@@ -7,3 +7,12 @@ ferrari-458-community.glb
   File unmodified. At runtime this project adjusts materials, separates exterior meshes along their
   existing geometry islands (no vertices or triangles changed), and adds demo names, order and offsets.
   Demo only: a 458 Italia, not the 488 GTB; not OEM geometry or part data. Trademark review needed before any public use.
+
+lamborghini-centenario-community.glb
+  "Lamborghini Centenario LP-770 Interior SDC" by SDC PERFORMANCE™️
+  https://sketchfab.com/3d-models/lamborghini-centenario-lp-770-interior-sdc-d679af35b5694301a185c7454a700c73
+  Licence: CC BY 4.0 https://creativecommons.org/licenses/by/4.0/ (shown on the download dialog, checked 2026-11-14)
+  Downloaded 2026-11-14 as the GLB with 1k textures (sha256 0c76c02161483d7694db87f8f10d846f01a4b33454bd85f12b2c4d1f8048a4a1).
+  File unmodified. At runtime this project separates meshes along their existing geometry islands
+  (no vertices or triangles changed) and adds demo names, order and offsets; the door animation is not used.
+  Demo only: names are positional, not Lamborghini part data. Trademark review needed before any public use.
