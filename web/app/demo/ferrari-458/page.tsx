@@ -13,15 +13,8 @@ export const metadata: Metadata = {
 
 export default function Page() {
   return (
-    <div className="wrap">
-      <header className="page-head">
-        <div className="eyebrow">3D workbench demo</div>
-        <h1>Take it <em>apart.</em></h1>
-        <p>Rotate, zoom, pick a part on the car or in the list, isolate it, hide it, and disassemble the car step by step.
-          <b> This is a free community model of a Ferrari 458 Italia, not the 488 GTB.</b> Exterior components (doors, panels,
-          bumpers, bonnet, mirrors, glass, lamps, grilles) and interior components (seats, door cards, console, dashboard, cabin
-          trim, structure) are the model’s own separate geometry pieces, named by where they sit — not Ferrari part data. Filter by system, inspect a component, or isolate it. The licensed 488 GTB will use this same workbench.</p>
-      </header>
+    <div className="wrap demo-page">
+      <h1 className="sr-only">3D workbench demo — community Ferrari 458 model</h1>
       <Workbench preset="demo458" />
       <section className="section" style={{ paddingTop: 40 }} aria-labelledby="missing-h">
         <div className="section-head" style={{ marginBottom: 16 }}>

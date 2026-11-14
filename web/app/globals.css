@@ -366,3 +366,11 @@ dialog::backdrop { background: #000a; backdrop-filter: blur(3px); }
 .workbench .viewer.card { border: 0; background: none; border-radius: 0; }
 .workbench .viewer-canvas { background: none; border-radius: 0; }
 .workbench .model-controls, .workbench .inspector { border-top-color: transparent; padding-left: 0; padding-right: 0; }
+
+/* Demo page: no boxes or borders — the car and the parts list sit directly on the page. */
+.demo-page { padding-top: 24px; }
+.demo-page .part-list.card { border: 0; background: none; border-radius: 0; padding-left: 0; padding-right: 0; }
+.demo-page .pl-group { border-top: 0; }
+.demo-page .inspector-kv div { border: 0; padding: 4px 0; }
+.demo-page .missing-grid .card { border: 0; background: none; padding-left: 0; padding-right: 0; }
+@media (max-width: 720px) { .workbench .viewer-tag { position: static; margin: 0 0 6px; } .workbench .viewer-tag .pill { white-space: normal; } }
