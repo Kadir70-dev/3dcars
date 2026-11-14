@@ -4,7 +4,8 @@ import Link from "next/link";
 import { useCallback, useDeferredValue, useEffect, useMemo, useRef, useState } from "react";
 import { api, type Assembly, type AssemblyDetail, type VehicleDetail } from "@/lib/api";
 import { shortlist, useShortlist } from "@/lib/shortlist";
-import { Schematic, SCHEMATIC_REGIONS } from "./Schematic";
+import { SCHEMATIC_REGIONS } from "./Schematic";
+import CarSwitcher from "./CarSwitcher";
 import { Known, ProvenanceNote, StatusPill } from "./Status";
 import { ModelControls, useModelState } from "./ModelControls";
 import { selectionForMesh, type Selection } from "@/lib/explode";
@@ -19,7 +20,6 @@ export default function Explorer({ vehicle, assemblies, initialCode }: Props) {
   const [sel, setSel] = useState<Selection>({ code: initialCode ?? "0001", partId: null });
   const code = sel.code;
   const setCode = useCallback((c: string | null) => setSel({ code: c, partId: null }), []);
-  const [exploded, setExploded] = useState(false);
   const fromModel = useRef(false);
   const groupsRef = useRef<HTMLDivElement>(null);
   const [detail, setDetail] = useState<AssemblyDetail | null>(null);
@@ -64,49 +64,32 @@ export default function Explorer({ vehicle, assemblies, initialCode }: Props) {
 
   return (
     <>
-      <div className="explorer">
-        <section className="card viewer" aria-labelledby="viewer-h">
-          <h2 id="viewer-h" className="sr-only">Vehicle view</h2>
-          {model && source ? (
-            <>
-              <div className="viewer-tag">
-                <span className="pill verified">Licensed 3D · {model.licensor}</span>
-                {!model.isRealVehicleGeometry && <span className="pill unverified">Stylised — not exact vehicle geometry</span>}
-              </div>
-              <Viewer3D source={source} bindings={bindings} label={`3D model of the ${vehicle.make} ${vehicle.model}. Drag to rotate, scroll to zoom; use the lists for keyboard selection.`}
-                highlighted={m.highlighted} exploded={m.exploded} hidden={m.hidden} isolate={m.isolate}
-                focusNonce={m.focusNonce} resetNonce={m.resetNonce} onPickMesh={pickMesh} />
-              <ModelControls m={m} selectionLabel={selectionLabel} />
-            </>
-          ) : (
-            <div className="viewer-canvas">
-              <div className="viewer-tag">
-                <span className="pill unverified">Illustrative schematic · not OEM geometry</span>
-              </div>
-              <Schematic className="schematic" selected={code} separated={exploded} onSelect={setCode} />
-              <div className="asset-gate" role="note">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true"><path d="M12 9v4m0 4h.01M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z" /></svg>
-                <span><b>Licensed 3D model required.</b> A realistic, rotatable 488 GTB with named parts will appear here once a commercially
-                  licensed asset is approved. Until then this original drawing is used for navigation only.</span>
-              </div>
+      {!model && (
+        // Full-screen 3D stage: just the cars, tabs on top, Assemble / Disassemble at the bottom.
+        <section className="explorer-stage" aria-label="3D cars"><CarSwitcher /></section>
+      )}
+      <div className="wrap explorer-below">
+      {!model && (
+        <div className="systems explorer-chips" aria-label="Jump to a group">
+          {SCHEMATIC_REGIONS.map((r) => (
+            <button key={r.code} type="button" className="chip" aria-pressed={code === r.code} onClick={() => setCode(r.code)}>{r.label}</button>
+          ))}
+        </div>
+      )}
+      <div className={model ? "explorer" : "explorer explorer-solo"}>
+        {model && source && (
+          <section className="card viewer" aria-labelledby="viewer-h">
+            <h2 id="viewer-h" className="sr-only">Vehicle view</h2>
+            <div className="viewer-tag">
+              <span className="pill verified">Licensed 3D · {model.licensor}</span>
+              {!model.isRealVehicleGeometry && <span className="pill unverified">Stylised — not exact vehicle geometry</span>}
             </div>
-          )}
-          {!model && <div className="viewer-foot">
-            <div className="segmented" role="group" aria-label="View mode">
-              <button type="button" aria-pressed={!exploded} onClick={() => setExploded(false)}>Assembled</button>
-              <button type="button" aria-pressed={exploded} onClick={() => setExploded(true)}>Separated</button>
-            </div>
-            <div className="systems" aria-label="Quick select">
-              {SCHEMATIC_REGIONS.map((r) => (
-                <button key={r.code} type="button" className="chip" aria-pressed={code === r.code} onClick={() => setCode(r.code)}>{r.label}</button>
-              ))}
-            </div>
-            <p className="help locked-tools">
-              Isolate, hide/show and step-by-step disassembly switch on with a licensed, part-separated model.{" "}
-              <Link href="/demo/ferrari-458">Try them on a community 3D Ferrari (458) →</Link>
-            </p>
-          </div>}
-        </section>
+            <Viewer3D source={source} bindings={bindings} label={`3D model of the ${vehicle.make} ${vehicle.model}. Drag to rotate, scroll to zoom; use the lists for keyboard selection.`}
+              highlighted={m.highlighted} exploded={m.exploded} hidden={m.hidden} isolate={m.isolate}
+              focusNonce={m.focusNonce} resetNonce={m.resetNonce} onPickMesh={pickMesh} />
+            <ModelControls m={m} selectionLabel={selectionLabel} />
+          </section>
+        )}
 
         <DetailPanel slug={vehicle.slug} assembly={selected} detail={detail?.code === code ? detail : null} error={loadError}
           boundParts={boundParts} selectedPartId={sel.partId} onSelectPart={(id) => code && setSel({ code, partId: id })} />
@@ -140,6 +123,7 @@ export default function Explorer({ vehicle, assemblies, initialCode }: Props) {
           {visible.length === 0 && <div className="empty">No groups match. Try a broader term such as “brake” or “door”.</div>}
         </div>
       </section>
+      </div>
     </>
   );
 }

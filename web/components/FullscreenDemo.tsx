@@ -7,6 +7,7 @@ import { useCallback, useMemo, useState } from "react";
 import { useModelState } from "@/components/ModelControls";
 import { DEMO458_BINDINGS, DEMO458_GROUPS, DEMO458_URL, tuneDemo458 } from "@/lib/demo458";
 import { LAMBO_BINDINGS, LAMBO_GROUPS, LAMBO_URL, tuneLambo } from "@/lib/demoLambo";
+import { buildMaseratiConcept, MASERATI_BINDINGS, MASERATI_GROUPS } from "@/lib/maseratiConcept";
 import { selectionForMesh, type Selection } from "@/lib/explode";
 import type { ModelSource } from "./Viewer3D";
 
@@ -21,12 +22,19 @@ const PRESETS = {
     source: { type: "url", url: LAMBO_URL, tune: tuneLambo } as ModelSource, bindings: LAMBO_BINDINGS, groups: LAMBO_GROUPS,
     label: "Community 3D model of a Lamborghini Centenario (not OEM data).",
   },
+  maserati: {
+    source: { type: "scene", build: buildMaseratiConcept } as ModelSource, bindings: MASERATI_BINDINGS, groups: MASERATI_GROUPS,
+    label: "Generated Maserati-inspired concept model (not OEM data).",
+  },
 } as const;
+
+export type DemoPreset = keyof typeof PRESETS;
 const NONE: Selection = { code: null, partId: null };
 /** How many of the most recent parts keep a full-size name label while the car comes apart. */
 const RECENT_LABELS = 10;
 
-export default function FullscreenDemo({ preset }: { preset: keyof typeof PRESETS }) {
+/** `embedded` renders inside the page (no full-screen takeover, header stays). */
+export default function FullscreenDemo({ preset, embedded = false }: { preset: DemoPreset; embedded?: boolean }) {
   const { source, bindings, groups, label } = PRESETS[preset];
   const [sel, setSel] = useState<Selection>(NONE);
   const [recent, setRecent] = useState<string[]>([]);
@@ -42,7 +50,7 @@ export default function FullscreenDemo({ preset }: { preset: keyof typeof PRESET
   const clear = () => { setSel(NONE); m.setIsolate(false); m.home(); };
 
   return (
-    <div className="fs-demo">
+    <div className={embedded ? "car-embed" : "fs-demo"}>
       <Viewer3D source={source} bindings={bindings} bare spin360 labelLines={false} staggerMs={90}
         label={`${label} Drag to rotate, scroll or pinch to zoom, click a part to inspect it.`}
         highlighted={m.highlighted} exploded={m.exploded} hidden={m.hidden} isolate={m.isolate}
@@ -53,9 +61,9 @@ export default function FullscreenDemo({ preset }: { preset: keyof typeof PRESET
           if (s) { setSel(s); m.setIsolate(true); m.focus(); }
         }}
         onPickNothing={() => { if (sel.code !== null || m.isolate) clear(); }} />
-      <div className="fs-actions" role="group" aria-label="Assembly">
-        <button type="button" className="fs-btn" aria-pressed={!out} onClick={() => { if (sel.code !== null || m.isolate) clear(); setRecent([]); m.setLevel(0); }}>Assemble</button>
-        <button type="button" className="fs-btn" aria-pressed={out} onClick={() => { if (sel.code !== null || m.isolate) clear(); setRecent([]); m.setLevel(m.steps.length); }}>Disassemble</button>
+      <div className={embedded ? "car-embed-actions" : "fs-actions"} role="group" aria-label="Assembly">
+        <button type="button" className={embedded ? undefined : "fs-btn"} aria-pressed={!out} onClick={() => { if (sel.code !== null || m.isolate) clear(); setRecent([]); m.setLevel(0); }}>Assemble</button>
+        <button type="button" className={embedded ? undefined : "fs-btn"} aria-pressed={out} onClick={() => { if (sel.code !== null || m.isolate) clear(); setRecent([]); m.setLevel(m.steps.length); }}>Disassemble</button>
       </div>
     </div>
   );
