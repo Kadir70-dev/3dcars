@@ -17,6 +17,7 @@ export default function Page() {
           Explore an original Italian GT-inspired coupe with selectable body, glass, lighting, wheels, and rear details.
           This procedural demo is not an exact Maserati production car or OEM parts reference.
         </p>
+        <p><a className="btn small" href="/models/demo/maserati-gt-concept-procedural.glb" download>Download 3D model (.glb)</a></p>
       </header>
       <Workbench preset="maseratiConcept" />
     </div>
