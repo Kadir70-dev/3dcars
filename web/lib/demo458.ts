@@ -8,6 +8,8 @@
 import type * as THREE from "three";
 import type { MeshBinding } from "./api";
 import type { FixtureGroup } from "./fixture";
+import { splitByIslands } from "./meshSplit";
+import { EXTERIOR_PARTS, EXTERIOR_SPLITS, EXTERIOR_SYSTEMS } from "./demo458Exterior";
 
 export const DEMO458_URL = "/models/demo/ferrari-458-community.glb";
 
@@ -19,7 +21,7 @@ export const DEMO458_ATTRIBUTION = {
   license: "CC BY 4.0",
   licenseUrl: "https://creativecommons.org/licenses/by/4.0/",
   checked: "2026-11-14",
-  changes: "Materials adjusted for display, duplicate wheel mesh names made unique, and demo part names, order and explode offsets added by this project.",
+  changes: "Materials adjusted for display, exterior meshes separated along their existing geometry islands (no geometry altered), duplicate wheel mesh names made unique, and demo part names, order and explode offsets added by this project.",
 };
 
 type V = [number, number, number];
@@ -30,44 +32,48 @@ const WHEEL_PARTS: [string, string, number][] = [
   ["rim", "Rim", 1.3], ["wheel_mesh", "Wheel", 1.0], ["brake", "Brake", 0.55],
 ];
 
-const ORDER: { mesh: string; name: string; explode: V }[] = [];
+export const DEMO458_SYSTEMS = [
+  ...EXTERIOR_SYSTEMS,
+  { code: "WHEELS", name: "Wheels & brakes" },
+  { code: "STEER", name: "Steering" },
+  { code: "OTHER", name: "Interior & other (Phase 3)" },
+];
+
+const ORDER: { mesh: string; name: string; explode: V; system: string }[] = EXTERIOR_PARTS.map((p) => ({ mesh: p.mesh, name: p.name, explode: p.explode, system: p.system }));
 for (const [c, [label, side]] of Object.entries(CORNERS)) {
   for (const [prefix, name, d] of WHEEL_PARTS) {
-    ORDER.push({ mesh: `${prefix}_${c}`, name: `${name} (${label})`, explode: [side * d, 0, 0] });
+    ORDER.push({ mesh: `${prefix}_${c}`, name: `${name} (${label})`, explode: [side * d, 0, 0], system: "WHEELS" });
   }
 }
+const other = (mesh: string, name: string, explode: V) => ({ mesh, name, explode, system: "OTHER" });
 ORDER.push(
-  { mesh: "glass", name: "Glass", explode: [0, 2.1, 0] },
-  { mesh: "wipers", name: "Wipers", explode: [0, 1.7, -1.1] },
-  { mesh: "lights", name: "Headlights", explode: [0, 0.5, -2.3] },
-  { mesh: "lights_red", name: "Tail lights", explode: [0, 0.5, 2.3] },
-  { mesh: "leds", name: "LED strips", explode: [0, 1.0, -1.9] },
-  { mesh: "grills", name: "Grilles", explode: [0, -0.1, -2.6] },
-  { mesh: "body", name: "Body shell", explode: [0, 1.35, 0] },
-  { mesh: "chrome", name: "Chrome pieces", explode: [0, 0.2, 2.8] },
-  { mesh: "yellow_trim", name: "Yellow trim pieces", explode: [0, 2.6, 0.5] },
-  { mesh: "blue", name: "Blue-coloured pieces", explode: [0, 2.9, -0.4] },
-  { mesh: "trim", name: "Trim pieces", explode: [-1.4, 0.9, 0.2] },
-  { mesh: "carbon_fibre_trim", name: "Carbon-fibre trim", explode: [1.4, 0.9, 0.2] },
-  { mesh: "carbon_fibre", name: "Carbon-fibre pieces", explode: [0, -0.7, 1.8] },
-  { mesh: "plastic_gray", name: "Grey plastic pieces", explode: [0, -0.7, -1.8] },
-  { mesh: "metal", name: "Metal pieces", explode: [1.2, -0.6, 1.2] },
-  { mesh: "brakes", name: "Brake pieces", explode: [-1.2, -0.6, 1.2] },
-  { mesh: "steering_column", name: "Steering column", explode: [0, 1.2, -0.9] },
-  { mesh: "steering_leather", name: "Steering wheel leather", explode: [-0.5, 1.6, -0.9] },
-  { mesh: "steering_carbon", name: "Steering wheel carbon", explode: [0.5, 1.6, -0.9] },
-  { mesh: "steering_centre", name: "Steering wheel centre", explode: [0, 2.0, -0.9] },
-  { mesh: "steering_metal", name: "Steering metal pieces", explode: [-0.5, 2.3, -0.9] },
-  { mesh: "steering_trim", name: "Steering trim", explode: [0.5, 2.3, -0.9] },
-  { mesh: "steering_red_lights", name: "Steering wheel lights", explode: [0, 2.6, -0.9] },
-  { mesh: "leather", name: "Leather (seats & trim)", explode: [0, 1.0, 1.0] },
-  { mesh: "interior_dark", name: "Dark interior trim", explode: [-1.0, 0.5, 0.6] },
-  { mesh: "interior_light", name: "Light interior trim", explode: [1.0, 0.5, 0.6] },
-  { mesh: "carpet", name: "Carpet", explode: [0, -1.0, 0] },
+  { mesh: "steering_column", name: "Steering column", explode: [0, 1.2, -0.9], system: "STEER" },
+  { mesh: "steering_leather", name: "Steering wheel leather", explode: [-0.5, 1.6, -0.9], system: "STEER" },
+  { mesh: "steering_carbon", name: "Steering wheel carbon", explode: [0.5, 1.6, -0.9], system: "STEER" },
+  { mesh: "steering_centre", name: "Steering wheel centre", explode: [0, 2.0, -0.9], system: "STEER" },
+  { mesh: "steering_metal", name: "Steering metal pieces", explode: [-0.5, 2.3, -0.9], system: "STEER" },
+  { mesh: "steering_trim", name: "Steering trim", explode: [0.5, 2.3, -0.9], system: "STEER" },
+  { mesh: "steering_red_lights", name: "Steering wheel lights", explode: [0, 2.6, -0.9], system: "STEER" },
+  // Not exterior: kept as whole material groups until Phase 3 audits the interior.
+  other("chrome_rest", "Other chrome pieces (mostly interior)", [0, 1.9, 0.2]),
+  other("plastic_gray_rest", "Other grey plastic pieces (interior)", [0, -0.7, -1.4]),
+  other("glass_rest", "Small interior glass pieces", [0, 2.2, -0.5]),
+  other("lights_red_rest", "Other red lamp pieces (interior)", [0, 1.5, 0.5]),
+  other("yellow_trim_rest", "Other yellow trim piece (interior)", [0, 2.6, 0.5]),
+  other("blue", "Blue-coloured pieces", [0, 2.9, -0.4]),
+  other("trim", "Trim pieces", [-1.4, 0.9, 0.2]),
+  other("carbon_fibre_trim", "Carbon-fibre trim", [1.4, 0.9, 0.2]),
+  other("carbon_fibre", "Carbon-fibre pieces", [0, -0.7, 1.8]),
+  other("metal", "Metal pieces", [1.2, -0.6, 1.2]),
+  other("brakes", "Brake pieces", [-1.2, -0.6, 1.2]),
+  other("leather", "Leather (seats & trim)", [0, 1.0, 1.0]),
+  other("interior_dark", "Dark interior trim", [-1.0, 0.5, 0.6]),
+  other("interior_light", "Light interior trim", [1.0, 0.5, 0.6]),
+  other("carpet", "Carpet", [0, -1.0, 0]),
 );
 
 export const DEMO_BATCH = 10;
-const pad = (n: number) => String(n).padStart(2, "0");
+const pad = (n: number) => String(n).padStart(3, "0");
 
 export const DEMO458_GROUPS: FixtureGroup[] = [];
 ORDER.forEach((p, i) => {
@@ -76,7 +82,7 @@ ORDER.forEach((p, i) => {
     const last = Math.min(ORDER.length, (b + 1) * DEMO_BATCH);
     DEMO458_GROUPS[b] = { code: `B${b + 1}`, name: `Step ${b + 1} · parts ${b * DEMO_BATCH + 1}–${last}`, parts: [] };
   }
-  DEMO458_GROUPS[b].parts.push({ id: i + 1, name: `${pad(i + 1)} · ${p.name}`, meshName: p.mesh });
+  DEMO458_GROUPS[b].parts.push({ id: i + 1, name: `${pad(i + 1)} · ${p.name}`, meshName: p.mesh, system: p.system });
 });
 
 export const DEMO458_BINDINGS: MeshBinding[] = ORDER.map((p, i) => ({
@@ -85,10 +91,16 @@ export const DEMO458_BINDINGS: MeshBinding[] = ORDER.map((p, i) => ({
 }));
 
 /**
- * Display-only preparation: see-through glass, glossier paint, and unique names
- * for the six meshes repeated inside each wheel group (e.g. "tire" → "tire_fl").
+ * Load-time preparation: split exterior meshes into their existing geometry islands
+ * (no geometry or material changes), see-through glass, glossier paint, and unique
+ * names for the six meshes repeated inside each wheel group (e.g. "tire" → "tire_fl").
  */
 export function tuneDemo458(root: THREE.Object3D) {
+  // Phase 2: separate exterior components along the model's own geometry islands.
+  root.updateMatrixWorld(true);
+  const toSplit: THREE.Mesh[] = [];
+  root.traverse((o) => { if ((o as THREE.Mesh).isMesh && EXTERIOR_SPLITS[o.name]) toSplit.push(o as THREE.Mesh); });
+  for (const m of toSplit) splitByIslands(m, EXTERIOR_SPLITS[m.name]);
   root.traverse((o) => {
     const corner = /^wheel_(fl|fr|rl|rr)$/.exec(o.name)?.[1];
     if (corner) {

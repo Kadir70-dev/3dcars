@@ -6,7 +6,8 @@ import { useCallback, useMemo, useState } from "react";
 import type { MeshBinding } from "@/lib/api";
 import { explodedMeshes, explodeSteps, meshesAtStep, meshesForSelection, type Selection } from "@/lib/explode";
 
-export function useModelState(bindings: MeshBinding[], sel: Selection) {
+/** `override` highlights a custom set (e.g. a whole vehicle system) when no single part is selected. */
+export function useModelState(bindings: MeshBinding[], sel: Selection, override: Set<string> | null = null) {
   const [hidden, setHidden] = useState<Set<string>>(() => new Set());
   const [isolate, setIsolate] = useState(false);
   const [level, setLevel] = useState(0);
@@ -15,7 +16,10 @@ export function useModelState(bindings: MeshBinding[], sel: Selection) {
   const [resetNonce, setResetNonce] = useState(0);
 
   const steps = useMemo(() => explodeSteps(bindings), [bindings]);
-  const highlighted = useMemo(() => meshesForSelection(bindings, sel), [bindings, sel]);
+  const highlighted = useMemo(
+    () => (override && sel.partId === null ? override : meshesForSelection(bindings, sel)),
+    [bindings, sel, override],
+  );
   const exploded = useMemo(
     () => explodedMeshes(bindings, level, onlySelection ? highlighted : null),
     [bindings, level, onlySelection, highlighted],

@@ -5,7 +5,7 @@
 import * as THREE from "three";
 import type { MeshBinding } from "./api";
 
-export interface FixturePart { id: number; name: string; meshName: string }
+export interface FixturePart { id: number; name: string; meshName: string; system?: string }
 export interface FixtureGroup { code: string; name: string; parts: FixturePart[] }
 
 export const FIXTURE_GROUPS: FixtureGroup[] = [

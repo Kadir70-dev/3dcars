@@ -54,10 +54,13 @@ export class LabelLayer {
   update(camera: THREE.Camera, w: number, h: number, rest: Map<string, THREE.Vector3>, now: Map<string, THREE.Vector3>,
     amount: Map<string, number>, shown: (n: string) => boolean, s: LabelState, lit: Set<string>) {
     const placed: { x: number; y: number; w: number; h: number }[] = [];
+    // A whole selected system (many parts) is labelled only once its parts are out, to avoid a pile of labels.
+    const litLabels = lit.size <= 4;
     for (const { name, el, line } of this.entries) {
       const t = amount.get(name) ?? 0;
-      const focus = s.focus.has(name) || lit.has(name) || s.hover === name;
-      const visible = shown(name) && (focus ? t > 0.02 || lit.has(name) || s.hover === name : s.showAll && t > 0.5);
+      const isLit = lit.has(name) && (litLabels || t > 0.02);
+      const focus = s.focus.has(name) || isLit || s.hover === name;
+      const visible = shown(name) && (focus ? t > 0.02 || isLit || s.hover === name : s.showAll && t > 0.5);
       const r = rest.get(name);
       if (!visible || !r) { el.style.display = "none"; line.style.display = "none"; continue; }
       this.a.copy(r).project(camera);

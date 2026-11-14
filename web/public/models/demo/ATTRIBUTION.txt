@@ -4,5 +4,6 @@ ferrari-458-community.glb
   Licence: CC BY 4.0 https://creativecommons.org/licenses/by/4.0/
   Obtained from https://github.com/mrdoob/three.js/blob/dev/examples/models/gltf/ferrari.glb
   (licence recorded in https://github.com/mrdoob/three.js/issues/23089)
-  File unmodified; materials are adjusted at runtime and demo groups/offsets are added by this project.
+  File unmodified. At runtime this project adjusts materials, separates exterior meshes along their
+  existing geometry islands (no vertices or triangles changed), and adds demo names, order and offsets.
   Demo only: a 458 Italia, not the 488 GTB; not OEM geometry or part data. Trademark review needed before any public use.

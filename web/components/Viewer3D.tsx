@@ -38,7 +38,11 @@ interface Props {
   showAllLabels?: boolean;
   /** Called when a part starts moving out, so the list can follow along. */
   onMoving?: (meshName: string) => void;
+  /** Called once the model is ready with geometry facts per bound mesh (for inspection panels). */
+  onStats?: (stats: Record<string, MeshStats>) => void;
 }
+
+export interface MeshStats { triangles: number; sourceMesh: string; islands: number | null }
 
 const GAP_MS = 380;
 const MOVE_MS = 700;
@@ -76,6 +80,7 @@ export default function Viewer3D(props: Props) {
   const look = useRef<{ s: LabelState; lit: Set<string>; hidden: Set<string> }>({ s: { focus: new Set(), showAll: false, hover: null }, lit: new Set(), hidden: new Set() });
   const labelsRef = useRef(props.labels);
   const movingRef = useRef(props.onMoving);
+  const statsRef = useRef(props.onStats);
   const host = useRef<HTMLDivElement>(null);
   const rt = useRef<Runtime | null>(null);
   const pickRef = useRef(onPickMesh);
@@ -171,6 +176,13 @@ export default function Viewer3D(props: Props) {
         tween: null, size,
       };
       setMissing(missingMeshes(bindings, all));
+      const stats: Record<string, MeshStats> = {};
+      for (const [n, o] of bound) {
+        let triangles = 0;
+        o.traverse((c) => { const g = (c as THREE.Mesh).geometry; if ((c as THREE.Mesh).isMesh && g) triangles += (g.index ? g.index.count : g.attributes.position.count) / 3; });
+        stats[n] = { triangles, sourceMesh: (o.userData.sourceMesh as string) ?? n, islands: (o.userData.islands as number) ?? null };
+      }
+      statsRef.current?.(stats);
       setState("ready");
     };
 
