@@ -4,7 +4,7 @@
 // asset exists) and by the abstract developer fixture.
 import { useCallback, useMemo, useState } from "react";
 import type { MeshBinding } from "@/lib/api";
-import { explodedMeshes, explodeSteps, meshesForSelection, type Selection } from "@/lib/explode";
+import { explodedMeshes, explodeSteps, meshesAtStep, meshesForSelection, type Selection } from "@/lib/explode";
 
 export function useModelState(bindings: MeshBinding[], sel: Selection) {
   const [hidden, setHidden] = useState<Set<string>>(() => new Set());
@@ -20,6 +20,8 @@ export function useModelState(bindings: MeshBinding[], sel: Selection) {
     () => explodedMeshes(bindings, level, onlySelection ? highlighted : null),
     [bindings, level, onlySelection, highlighted],
   );
+  const movable = useMemo(() => bindings.filter((b) => b.explode).length, [bindings]);
+  const current = useMemo(() => meshesAtStep(bindings, level), [bindings, level]);
   const selectionHidden = highlighted.size > 0 && [...highlighted].every((n) => hidden.has(n));
 
   const toggleHidden = useCallback(() => {
@@ -40,7 +42,7 @@ export function useModelState(bindings: MeshBinding[], sel: Selection) {
   }, []);
 
   return {
-    steps, level, setLevel, onlySelection, setOnlySelection, isolate, setIsolate,
+    steps, level, setLevel, movable, current, onlySelection, setOnlySelection, isolate, setIsolate,
     hidden, showAll: () => setHidden(new Set()), toggleHidden, selectionHidden,
     highlighted, exploded, focus: () => setFocusNonce((n) => n + 1), focusNonce, resetNonce, reset,
   };
@@ -50,7 +52,8 @@ export type ModelState = ReturnType<typeof useModelState>;
 
 export function ModelControls({ m, selectionLabel }: { m: ModelState; selectionLabel: string | null }) {
   const total = m.steps.length;
-  const stepText = m.level === 0 ? "Assembled" : m.level >= total ? "Fully exploded" : `Step ${m.level} of ${total}`;
+  const stepText = m.level === 0 ? "Assembled" : `Step ${m.level} of ${total}`;
+  const next = () => m.setLevel(Math.min(total, m.level + 1));
   const hasSel = m.highlighted.size > 0;
   return (
     <div className="model-controls">
@@ -59,8 +62,12 @@ export function ModelControls({ m, selectionLabel }: { m: ModelState; selectionL
         <div className="stepper">
           <button type="button" className="icon-btn" onClick={() => m.setLevel(Math.max(0, m.level - 1))} disabled={m.level === 0} aria-label="Previous step">‹</button>
           <span className="stepper-val" aria-live="polite">{total ? stepText : "No offsets recorded"}</span>
-          <button type="button" className="icon-btn" onClick={() => m.setLevel(Math.min(total, m.level + 1))} disabled={m.level >= total} aria-label="Next step">›</button>
+          <button type="button" className="icon-btn" onClick={next} disabled={m.level >= total} aria-label="Next step">›</button>
         </div>
+        {total > 0 && (m.level < total
+          ? <button type="button" className="btn small primary" onClick={next}>{m.level === 0 ? "Disassemble ▶" : "Next step ›"}</button>
+          : <button type="button" className="btn small" onClick={() => m.setLevel(0)}>Reassemble</button>)}
+        {total > 0 && <span className="mc-count">{m.exploded.size} / {m.movable} parts out</span>}
         <div className="segmented" role="group" aria-label="View mode">
           <button type="button" aria-pressed={m.level === 0} onClick={() => m.setLevel(0)}>Assembled</button>
           <button type="button" aria-pressed={total > 0 && m.level >= total} disabled={!total} onClick={() => m.setLevel(total)}>Exploded</button>

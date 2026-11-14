@@ -11,8 +11,9 @@ import { DRACOLoader } from "three/addons/loaders/DRACOLoader.js";
 import { RoomEnvironment } from "three/addons/environments/RoomEnvironment.js";
 import type { MeshBinding } from "@/lib/api";
 import { easeInOut, explodeTargets, missingMeshes, type Vec3 } from "@/lib/explode";
+import { LabelLayer, type LabelState } from "./viewerLabels";
 
-/** `tune` may adjust materials only (e.g. glass transparency); it must not move geometry. */
+/** `tune` may adjust materials and make duplicate node names unique; it must not move geometry. */
 export type ModelSource =
   | { type: "url"; url: string; tune?: (root: THREE.Object3D) => void }
   | { type: "scene"; build: () => THREE.Object3D };
@@ -30,7 +31,17 @@ interface Props {
   focusNonce: number;
   /** Increment to return the camera to its starting view. */
   resetNonce: number;
+  /** Optional name labels per mesh, shown next to pulled-out parts. */
+  labels?: Record<string, string>;
+  /** Meshes whose labels show at full size (e.g. the current disassembly step). */
+  labelFocus?: Set<string>;
+  showAllLabels?: boolean;
+  /** Called when a part starts moving out, so the list can follow along. */
+  onMoving?: (meshName: string) => void;
 }
+
+const GAP_MS = 380;
+const MOVE_MS = 700;
 
 interface MatState { mat: THREE.Material; opacity: number; transparent: boolean; depthWrite: boolean }
 interface CamTween { fromPos: THREE.Vector3; toPos: THREE.Vector3; fromTarget: THREE.Vector3; toTarget: THREE.Vector3; t: number }
@@ -47,6 +58,13 @@ interface Runtime {
   home: { pos: THREE.Vector3; target: THREE.Vector3 };
   tween: CamTween | null;
   size: number;
+  /** When each part may start moving (staggered one by one). */
+  startAt: Map<string, number>;
+  rest: Map<string, THREE.Vector3>;
+  worldOff: Map<string, THREE.Vector3>;
+  offNow: Map<string, THREE.Vector3>;
+  labels: LabelLayer | null;
+  hover: string | null;
 }
 
 const HIGHLIGHT = new THREE.Color("#d8b36b");
@@ -55,13 +73,19 @@ const GHOST_OPACITY = 0.08;
 
 export default function Viewer3D(props: Props) {
   const { source, bindings, label, highlighted, exploded, hidden, isolate, onPickMesh, focusNonce, resetNonce } = props;
+  const look = useRef<{ s: LabelState; lit: Set<string>; hidden: Set<string> }>({ s: { focus: new Set(), showAll: false, hover: null }, lit: new Set(), hidden: new Set() });
+  const labelsRef = useRef(props.labels);
+  const movingRef = useRef(props.onMoving);
   const host = useRef<HTMLDivElement>(null);
   const rt = useRef<Runtime | null>(null);
   const pickRef = useRef(onPickMesh);
   const [state, setState] = useState<"loading" | "ready" | "error">("loading");
   const [missing, setMissing] = useState<string[]>([]);
 
-  useEffect(() => { pickRef.current = onPickMesh; }, [onPickMesh]);
+  useEffect(() => { pickRef.current = onPickMesh; movingRef.current = props.onMoving; }, [onPickMesh, props.onMoving]);
+  useEffect(() => {
+    look.current = { s: { focus: props.labelFocus ?? new Set(), showAll: Boolean(props.showAllLabels), hover: rt.current?.hover ?? null }, lit: highlighted, hidden };
+  }, [props.labelFocus, props.showAllLabels, highlighted, hidden]);
 
   useEffect(() => {
     const el = host.current!;
@@ -129,10 +153,18 @@ export default function Viewer3D(props: Props) {
       controls.minDistance = size * 0.2;
       controls.maxDistance = size * 3;
       camera.updateProjectionMatrix();
+      const worldTargets = explodeTargets(bindings, [...bound.keys()]);
+      const lbl = labelsRef.current;
       rt.current = {
+        startAt: new Map(),
+        rest: new Map([...bound].map(([n, o]) => [n, new THREE.Box3().setFromObject(o).getCenter(new THREE.Vector3())])),
+        worldOff: new Map([...worldTargets].map(([n, v]) => [n, new THREE.Vector3(...v)])),
+        offNow: new Map([...bound.keys()].map((n) => [n, new THREE.Vector3()])),
+        labels: lbl ? new LabelLayer(el, lbl, bound.keys(), (n) => pickRef.current(n)) : null,
+        hover: null,
         bound, meshes,
         base: new Map([...bound].map(([n, o]) => [n, o.position.clone()])),
-        targets: toParentSpace(bound, explodeTargets(bindings, [...bound.keys()])),
+        targets: toParentSpace(bound, worldTargets),
         t: new Map([...bound.keys()].map((n) => [n, 0])),
         want: new Map([...bound.keys()].map((n) => [n, 0])),
         camera, controls, home: { pos: camera.position.clone(), target: center.clone() },
@@ -168,8 +200,29 @@ export default function Viewer3D(props: Props) {
         return;
       }
     };
+    // Hover shows the name of the part under the pointer (one raycast per frame at most).
+    let hoverAt: THREE.Vector2 | null = null;
+    const onMove = (e: PointerEvent) => {
+      if (e.buttons || e.pointerType !== "mouse") { hoverAt = null; return; }
+      const box = renderer.domElement.getBoundingClientRect();
+      hoverAt = new THREE.Vector2(((e.clientX - box.left) / box.width) * 2 - 1, -((e.clientY - box.top) / box.height) * 2 + 1);
+    };
+    const onLeave = () => { hoverAt = null; if (rt.current) rt.current.hover = null; };
+    const hoverPick = (r: Runtime, at: THREE.Vector2) => {
+      ray.setFromCamera(at, camera);
+      const byMesh = new Map(r.meshes.map((m) => [m.mesh, m]));
+      r.hover = null;
+      for (const hit of ray.intersectObjects(scene.children, true)) {
+        const info = byMesh.get(hit.object as THREE.Mesh);
+        if (!info || !isShown(info.mesh) || info.mats[0]?.mat.opacity <= GHOST_OPACITY) continue;
+        r.hover = info.owner;
+        break;
+      }
+    };
     renderer.domElement.addEventListener("pointerdown", onDown);
     renderer.domElement.addEventListener("pointerup", onUp);
+    renderer.domElement.addEventListener("pointermove", onMove);
+    renderer.domElement.addEventListener("pointerleave", onLeave);
 
     const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     let last = performance.now();
@@ -178,14 +231,22 @@ export default function Viewer3D(props: Props) {
       last = now;
       const r = rt.current;
       if (r) {
-        const step = reduce ? 1 : dt / 700;
+        const step = reduce ? 1 : dt / MOVE_MS;
         for (const [n, o] of r.bound) {
           const cur = r.t.get(n)!, goal = r.want.get(n)!;
-          if (cur === goal) continue;
+          if (cur === goal || now < (r.startAt.get(n) ?? 0)) continue;
+          if (cur === 0 && goal === 1) movingRef.current?.(n);
           const next = goal > cur ? Math.min(goal, cur + step) : Math.max(goal, cur - step);
           r.t.set(n, next);
           const b = r.base.get(n)!, off = r.targets.get(n)!, k = easeInOut(next);
           o.position.set(b.x + off[0] * k, b.y + off[1] * k, b.z + off[2] * k);
+          r.offNow.get(n)!.copy(r.worldOff.get(n) ?? new THREE.Vector3()).multiplyScalar(k);
+        }
+        if (hoverAt) hoverPick(r, hoverAt);
+        if (r.labels) {
+          const L = look.current, size = renderer.getSize(new THREE.Vector2());
+          r.labels.update(camera, size.x, size.y, r.rest, r.offNow, r.t, (n) => !L.hidden.has(n),
+            { ...L.s, hover: r.hover }, L.lit);
         }
         if (r.tween) {
           const tw = r.tween;
@@ -209,6 +270,9 @@ export default function Viewer3D(props: Props) {
       controls.dispose();
       renderer.domElement.removeEventListener("pointerdown", onDown);
       renderer.domElement.removeEventListener("pointerup", onUp);
+      renderer.domElement.removeEventListener("pointermove", onMove);
+      renderer.domElement.removeEventListener("pointerleave", onLeave);
+      rt.current?.labels?.dispose();
       scene.traverse((o) => {
         const m = o as THREE.Mesh;
         if (m.isMesh) {
@@ -227,8 +291,23 @@ export default function Viewer3D(props: Props) {
   useEffect(() => {
     const r = rt.current;
     if (!r) return;
-    for (const n of r.bound.keys()) r.want.set(n, exploded.has(n) ? 1 : 0);
-  }, [exploded, state]);
+    // Parts move one by one in binding order (reverse order when going back together).
+    const now = performance.now();
+    const order = bindings.map((b) => b.meshName).filter((n) => r.bound.has(n));
+    const out = order.filter((n) => exploded.has(n) && r.want.get(n) !== 1);
+    const back = order.filter((n) => !exploded.has(n) && r.want.get(n) !== 0).reverse();
+    const gap = window.matchMedia("(prefers-reduced-motion: reduce)").matches ? 0 : GAP_MS;
+    out.forEach((n, i) => { r.want.set(n, 1); r.startAt.set(n, now + i * gap); });
+    back.forEach((n, i) => { r.want.set(n, 0); r.startAt.set(n, now + i * gap * 0.35); });
+    // Pull the camera back while parts are out so they stay in frame; return when reassembled.
+    const wasOut = [...r.want.values()].some((v) => v === 1) && out.length === [...r.want.values()].filter((v) => v === 1).length;
+    if (wasOut && order.length) {
+      const dir = r.camera.position.clone().sub(r.controls.target);
+      r.tween = { fromPos: r.camera.position.clone(), toPos: r.controls.target.clone().add(dir.multiplyScalar(1.55)), fromTarget: r.controls.target.clone(), toTarget: r.controls.target.clone(), t: 0 };
+    } else if (exploded.size === 0 && back.length) {
+      r.tween = { fromPos: r.camera.position.clone(), toPos: r.home.pos.clone(), fromTarget: r.controls.target.clone(), toTarget: r.home.target.clone(), t: 0 };
+    }
+  }, [exploded, state, bindings]);
 
   // Highlight, isolate (ghost everything else) and hide.
   useEffect(() => {

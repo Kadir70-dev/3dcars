@@ -82,3 +82,11 @@ export function explodedMeshes(bindings: MeshBinding[], level: number, only: Set
       .map((b) => b.meshName),
   );
 }
+
+/** Meshes that move in the given step (1-based); unordered meshes belong to the final step. */
+export function meshesAtStep(bindings: MeshBinding[], level: number): Set<string> {
+  const steps = explodeSteps(bindings);
+  if (level <= 0 || level > steps.length) return new Set();
+  const step = steps[level - 1], finalStep = steps[steps.length - 1];
+  return new Set(bindings.filter((b) => b.explode && (b.explodeStep ?? finalStep) === step).map((b) => b.meshName));
+}

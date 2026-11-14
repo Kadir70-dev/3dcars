@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { codeForMesh, explodedMeshes, explodeSteps, explodeTargets, lerpVec, meshesForCode, meshesForSelection, missingMeshes, selectionForMesh } from "./explode";
+import { codeForMesh, explodedMeshes, meshesAtStep, explodeSteps, explodeTargets, lerpVec, meshesForCode, meshesForSelection, missingMeshes, selectionForMesh } from "./explode";
 import type { MeshBinding } from "./api";
 
 const bindings: MeshBinding[] = [
@@ -55,6 +55,12 @@ describe("selection and steps", () => {
     expect([...explodedMeshes(stepped, 1, null)]).toEqual(["hood"]);
     expect([...explodedMeshes(stepped, 2, null)]).toEqual(["hood", "wheel_l", "wheel_r"]);
     expect([...explodedMeshes(stepped, 9, null)]).toEqual(["hood", "wheel_l", "wheel_r", "seat"]);
+  });
+  it("lists the meshes of one step", () => {
+    expect([...meshesAtStep(stepped, 2)]).toEqual(["wheel_l", "wheel_r"]);
+    expect([...meshesAtStep(stepped, 3)]).toEqual(["seat"]);
+    expect(meshesAtStep(stepped, 0).size).toBe(0);
+    expect(meshesAtStep(stepped, 4).size).toBe(0);
   });
   it("limits the explode to the selection", () => {
     expect([...explodedMeshes(stepped, 3, new Set(["wheel_l", "wheel_r"]))]).toEqual(["wheel_l", "wheel_r"]);

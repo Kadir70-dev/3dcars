@@ -1,6 +1,6 @@
 "use client";
 import dynamic from "next/dynamic";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ModelControls, useModelState } from "@/components/ModelControls";
 import { buildFixture, FIXTURE_BINDINGS, FIXTURE_GROUPS } from "@/lib/fixture";
 import { DEMO458_BINDINGS, DEMO458_GROUPS, DEMO458_URL, tuneDemo458 } from "@/lib/demo458";
@@ -20,9 +20,9 @@ const PRESETS = {
   },
   demo458: {
     source: { type: "url", url: DEMO458_URL, tune: tuneDemo458 } as ModelSource, bindings: DEMO458_BINDINGS, groups: DEMO458_GROUPS,
-    tag: "Community 458 Italia model · CC BY 4.0 · not the 488 GTB · not OEM", listTitle: "Demo groups",
+    tag: "Community 458 Italia model · CC BY 4.0 · not the 488 GTB · not OEM", listTitle: "Parts in disassembly order",
     label: "Community 3D model of a Ferrari 458 Italia. Drag to rotate, scroll to zoom; use the list for keyboard selection.",
-    note: "Groups come from the mesh names in this model; explode offsets are demo values. No OEM numbers, quantities or fitment.",
+    note: "Names are plain readings of this model’s own mesh names (it is split by material, so some are generic). Order, steps of 10 and offsets are a demo — no OEM numbers, quantities or fitment.",
   },
 } as const;
 
@@ -32,6 +32,14 @@ export default function Workbench({ preset }: { preset: keyof typeof PRESETS }) 
   const fromModel = useRef(false);
   const listRef = useRef<HTMLDivElement>(null);
   const m = useModelState(bindings, sel);
+  const [showAll, setShowAll] = useState(false);
+  const [moving, setMoving] = useState<string | null>(null);
+  const labels = useMemo(() => Object.fromEntries(groups.flatMap((g) => g.parts.map((p) => [p.meshName, p.name]))), [groups]);
+  // The list follows the part that is currently coming out.
+  const onMoving = useCallback((name: string) => {
+    setMoving(name);
+    listRef.current?.querySelector(`[data-mesh="${CSS.escape(name)}"]`)?.scrollIntoView({ block: "nearest", behavior: "smooth" });
+  }, []);
 
   const group = groups.find((g) => g.code === sel.code) ?? null;
   const part = group?.parts.find((p) => p.id === sel.partId) ?? null;
@@ -52,6 +60,7 @@ export default function Workbench({ preset }: { preset: keyof typeof PRESETS }) 
         <Viewer3D source={source} bindings={bindings} label={viewerLabel}
           highlighted={m.highlighted} exploded={m.exploded} hidden={m.hidden} isolate={m.isolate}
           focusNonce={m.focusNonce} resetNonce={m.resetNonce}
+          labels={labels} labelFocus={m.current} showAllLabels={showAll} onMoving={onMoving}
           onPickMesh={(name) => { const s = selectionForMesh(bindings, name); if (s) { fromModel.current = true; setSel(s); } }} />
         <ModelControls m={m} selectionLabel={label} />
       </section>
@@ -61,6 +70,10 @@ export default function Workbench({ preset }: { preset: keyof typeof PRESETS }) 
           <h2 id="fx-list-h">{listTitle}</h2>
           {sel.code && <button type="button" className="btn small" onClick={() => setSel(NONE)}>Clear selection</button>}
         </div>
+        <label className="mc-check pl-toggle">
+          <input type="checkbox" checked={showAll} onChange={(e) => setShowAll(e.target.checked)} />
+          Show names of all parts that are out
+        </label>
         <div ref={listRef}>
           {groups.map((g) => {
             const gOn = sel.code === g.code && sel.partId === null;
@@ -73,11 +86,14 @@ export default function Workbench({ preset }: { preset: keyof typeof PRESETS }) 
                   {g.parts.map((p) => {
                     const on = sel.partId === p.id;
                     const hidden = m.hidden.has(p.meshName);
+                    const out = m.exploded.has(p.meshName);
+                    const now = out && moving === p.meshName;
                     return (
                       <li key={p.id}>
-                        <button type="button" className="pl-part" aria-current={on} onClick={() => setSel({ code: g.code, partId: p.id })}>
+                        <button type="button" className={`pl-part${now ? " is-moving" : ""}${out ? " is-out" : ""}`} data-mesh={p.meshName}
+                          aria-current={on} onClick={() => setSel({ code: g.code, partId: p.id })}>
                           <span>{p.name}</span>
-                          <span className="mono muted">{hidden ? "hidden" : p.meshName}</span>
+                          <span className="mono muted">{hidden ? "hidden" : now ? "coming out" : out ? "out" : ""}</span>
                         </button>
                       </li>
                     );

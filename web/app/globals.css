@@ -330,3 +330,19 @@ dialog::backdrop { background: #000a; backdrop-filter: blur(3px); }
 .product p { margin: 0; font-size: 12px; }
 .product-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
 .product-actions .btn { min-height: 36px; padding: 0 12px; font-size: 11px; }
+
+/* Part-name labels over the 3D view */
+.viewer-labels { position: absolute; inset: 0; pointer-events: none; overflow: hidden; z-index: 2; }
+.viewer-labels svg { position: absolute; inset: 0; width: 100%; height: 100%; }
+.viewer-labels line { stroke: #d8b36bcc; stroke-width: 1; stroke-dasharray: 3 3; }
+.viewer-labels line.past { stroke: #9aa19f55; }
+.vlabel { position: absolute; left: 0; top: 0; pointer-events: auto; white-space: nowrap; font: 600 11px/1.2 var(--sans); color: var(--text);
+  background: #0b0c0de6; border: 1px solid #d8b36b99; border-radius: 999px; padding: 4px 10px; cursor: pointer; }
+.vlabel.past { font-size: 9.5px; font-weight: 500; padding: 2px 7px; color: var(--muted); border-color: var(--line-2); opacity: .8; }
+.vlabel.lit { color: #111; background: var(--gold); border-color: var(--gold); opacity: 1; }
+.mc-count { font: 600 11px var(--mono); color: var(--muted); }
+.pl-toggle { margin: 0 0 8px; }
+.pl-part.is-out span:first-child { color: var(--text); }
+.pl-part:not(.is-out) span:first-child { color: var(--muted); }
+.pl-part.is-moving { border-color: var(--red); background: #e2293214; }
+.pl-part.is-moving span:last-child { color: var(--red-2); }
