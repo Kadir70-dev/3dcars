@@ -48,7 +48,11 @@ export default function Workbench({ preset }: { preset: keyof typeof PRESETS }) 
   const [stats, setStats] = useState<Record<string, MeshStats>>({});
   const fromModel = useRef(false);
   const listRef = useRef<HTMLDivElement>(null);
-  const parts = useMemo(() => groups.flatMap((g, gi) => g.parts.map((p) => ({ ...p, group: g.code, step: gi + 1 }))), [groups]);
+  // Step and order come from the bindings (the actual disassembly), not from how the list is grouped.
+  const parts = useMemo(() => {
+    const order = new Map(bindings.map((b, i) => [b.meshName, { step: b.explodeStep ?? null, order: i + 1 }]));
+    return groups.flatMap((g) => g.parts.map((p) => ({ ...p, group: g.code, step: order.get(p.meshName)?.step ?? null, order: order.get(p.meshName)?.order ?? null })));
+  }, [groups, bindings]);
   const systemMeshes = useMemo(() => (system ? new Set(parts.filter((p) => p.system === system).map((p) => p.meshName)) : null), [parts, system]);
   const m = useModelState(bindings, sel, systemMeshes);
   const [showAll, setShowAll] = useState(false);
@@ -93,7 +97,7 @@ export default function Workbench({ preset }: { preset: keyof typeof PRESETS }) 
           onPickMesh={(name) => { const s = selectionForMesh(bindings, name); if (s) { fromModel.current = true; select(s); } }} />
         <ModelControls m={m} selectionLabel={label} />
         <PartInspector m={m} note={inspectNote} stats={part ? stats[part.meshName] : undefined}
-          target={part ? { name: part.name, meshName: part.meshName, systemName: systemName(part.system), step: part.step, order: part.id } : null}
+          target={part ? { name: part.name, meshName: part.meshName, systemName: systemName(part.system), step: part.step, order: part.order } : null}
           onClear={clearAll} />
       </section>
 
