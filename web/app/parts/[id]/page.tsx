@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { api, ApiError, type PartDetail } from "@/lib/api";
@@ -51,19 +52,20 @@ export default async function PartPage({ params }: P) {
           <section className="card row-card">
             <h2 style={{ fontSize: 26 }}>Fitment</h2>
             {p.fitments.length === 0 ? <p>No fitment records. Model-year and VIN compatibility are <b>not verified</b>.</p> : (
-              <table className="data-table">
-                <thead><tr><th>Vehicle</th><th>Year</th><th>Market</th><th>VIN range</th><th>Status</th></tr></thead>
+              <div className="table-wrap"><table className="data-table">
+                <thead><tr><th>Vehicle</th><th>Year</th><th>Market</th><th>VIN range</th><th>Note</th><th>Status</th></tr></thead>
                 <tbody>
                   {p.fitments.map((f, i) => (
                     <tr key={i}><td>{f.vehicleSlug}</td><td>{f.modelYear ?? "—"}</td><td>{f.market ?? "—"}</td>
-                      <td className="mono">{f.vinFrom ? `${f.vinFrom} → ${f.vinTo ?? "…"}` : "—"}</td><td><StatusPill status={f.provenance.verificationStatus} /></td></tr>
+                      <td className="mono">{f.vinFrom ? `${f.vinFrom} → ${f.vinTo ?? "…"}` : "—"}</td><td className="muted">{f.notes ?? "—"}</td><td><StatusPill status={f.provenance.verificationStatus} /></td></tr>
                   ))}
                 </tbody>
-              </table>
+              </table></div>
             )}
           </section>
           <section className="card row-card">
             <h2 style={{ fontSize: 26 }}>Used in</h2>
+            {p.assemblies.length === 0 && <p>Not yet mapped to one of the 95 assembly groups.</p>}
             {p.assemblies.map((a) => (
               <p key={`${a.assemblyCode}-${a.diagramRef}`}>
                 <Link href={`/vehicles/ferrari-488-gtb?assembly=${a.assemblyCode}`}>{a.assemblyCode} · {a.assemblyName}</Link>
@@ -73,13 +75,21 @@ export default async function PartPage({ params }: P) {
           </section>
         </div>
         <aside className="card detail">
+          {p.imageUrl && (
+            <div className="product-img detail-img">
+              <Image src={p.imageUrl} alt={`${p.name} — photo from the Autovivo store`} fill sizes="(max-width: 1000px) 100vw, 420px" priority />
+            </div>
+          )}
           <div className="kv" style={{ marginTop: 0 }}>
             <div><small>Revision</small><Known value={p.revision} missing="Not recorded" /></div>
-            <div><small>Price</small><Known value={null} missing="Not offered" /></div>
+            <div><small>Price</small><Known value={null} missing="On request" /></div>
           </div>
           {p.description && <p className="muted">{p.description}</p>}
           <ProvenanceNote p={p.provenance} />
-          <div className="detail-actions"><AddPart id={p.id} label={`${p.oemPartNumber ?? "No OEM no."} · ${p.name}`} /></div>
+          <div className="detail-actions">
+            <AddPart id={p.id} label={`${p.oemPartNumber ?? "No OEM no."} · ${p.name}`} />
+            {p.listingUrl && <a className="btn" href={p.listingUrl} target="_blank" rel="noreferrer">View on Autovivo store ↗</a>}
+          </div>
         </aside>
       </div>
     </div>

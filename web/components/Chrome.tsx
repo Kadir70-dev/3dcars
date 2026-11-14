@@ -17,23 +17,23 @@ export function Header() {
       <a className="skip" href="#main">Skip to content</a>
       <div className="topbar">
         <div className="wrap">
-          <span><b>Research preview</b> · Ferrari 488 GTB</span>
-          <span>Independent project · Not affiliated with Ferrari</span>
+          <span><b>Private preview</b> · Ferrari 488 GTB parts explorer</span>
+          <span>Genuine-parts enquiries · <a href="tel:+97143287914">+971 4 328 7914</a></span>
         </div>
       </div>
       <header className="nav">
         <div className="wrap">
-          <Link className="brand" href="/" aria-label="Apex Auto Atlas home">
-            <span className="brand-mark" aria-hidden="true"><span>AA</span></span>
-            <span>APEX <small>AUTO ATLAS</small></span>
+          <Link className="brand" href="/" aria-label="Autovivo home">
+            <span className="wordmark"><span>auto</span><span>vivo</span></span>
+            <span className="brand-sub" aria-hidden="true">Italian luxury car parts</span>
           </Link>
           <nav className="navlinks" aria-label="Main">
             {links.map((l) => (
               <Link key={l.href} href={l.href} aria-current={path.startsWith(l.href) ? "page" : undefined}>{l.label}</Link>
             ))}
           </nav>
-          <Link className="btn small quote-pill" href="/quote" aria-label={`Quote list, ${items.length} item${items.length === 1 ? "" : "s"}`}>
-            Quote list <span className="count" aria-hidden="true">{items.length}</span>
+          <Link className="btn small quote-pill" href="/quote" aria-label={`Enquiry list, ${items.length} item${items.length === 1 ? "" : "s"}`}>
+            Enquiry list <span className="count" aria-hidden="true">{items.length}</span>
           </Link>
         </div>
         <nav className="mobile-nav" aria-label="Main (mobile)">
@@ -49,17 +49,20 @@ export function Footer() {
     <footer className="footer">
       <div className="wrap">
         <div>
-          <p><strong>Independent research project.</strong> Ferrari and 488 GTB are named solely to identify the vehicle.
-            Apex Auto Atlas is not affiliated with, endorsed by, or sponsored by Ferrari S.p.A.</p>
-          <p>Assembly titles come from a public retailer index and are not an authorized parts catalogue.
-            Do not order parts or perform repairs from this site alone. No prices, stock or checkout are offered.</p>
-          <p className="mono" style={{ fontSize: 11, letterSpacing: ".1em" }}>APEX AUTO ATLAS · FERRARI MILESTONE</p>
+          <p><strong>Autovivo Spare Parts L.L.C</strong> · Italy &amp; Dubai · <a href="tel:+97143287914">+971 4 328 7914</a> ·{" "}
+            <a href="https://autovivo.it/" target="_blank" rel="noreferrer">autovivo.it ↗</a></p>
+          <p>Ferrari and 488 GTB are named solely to identify the vehicle. Autovivo is an independent parts supplier and is not
+            affiliated with, endorsed by, or sponsored by Ferrari S.p.A.</p>
+          <p>Part numbers and fitment marked “Listed” come from Autovivo’s store catalogue; assembly titles come from a public
+            retailer index. Neither is yet checked against Ferrari’s own catalogue — confirm against your VIN before ordering.
+            Prices on request; no online checkout here.</p>
+          <p className="mono" style={{ fontSize: 11, letterSpacing: ".1em" }}>AUTOVIVO · PARTS EXPLORER · PRIVATE PREVIEW</p>
         </div>
         <nav aria-label="Footer">
           <Link href="/vehicles/ferrari-488-gtb">Explorer</Link>
           <Link href="/catalog">Catalog</Link>
           <Link href="/sources">Sources &amp; data gaps</Link>
-          <Link href="/quote">Quote list</Link>
+          <Link href="/quote">Enquiry list</Link>
           <Link href="/admin">Admin</Link>
         </nav>
       </div>

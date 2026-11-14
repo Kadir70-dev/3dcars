@@ -8,10 +8,10 @@ const serif = Instrument_Serif({ subsets: ["latin"], weight: "400", style: ["nor
 
 export const metadata: Metadata = {
   metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3020"),
-  title: { default: "Apex Auto Atlas — Ferrari 488 GTB parts explorer", template: "%s · Apex Auto Atlas" },
+  title: { default: "Autovivo — Ferrari 488 GTB parts explorer", template: "%s · Autovivo" },
   description:
     "Independent research explorer for Ferrari 488 GTB assemblies and parts, with sources and verification status on every record. Not affiliated with Ferrari.",
-  openGraph: { type: "website", siteName: "Apex Auto Atlas" },
+  openGraph: { type: "website", siteName: "Autovivo" },
 };
 
 export const viewport: Viewport = { themeColor: "#0b0c0d", width: "device-width", initialScale: 1 };

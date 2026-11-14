@@ -16,6 +16,7 @@ const typeLabel: Record<string, string> = {
   licensed_third_party: "Licensed third party",
   manufacturer_publication: "Manufacturer publication",
   public_retailer_index: "Public retailer index",
+  client_catalogue: "Client catalogue",
   project_classification: "Project classification",
 };
 

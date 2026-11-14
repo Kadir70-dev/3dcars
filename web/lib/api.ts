@@ -37,7 +37,9 @@ export interface Assembly {
 }
 export interface PartSummary {
   id: number; oemPartNumber: string | null; name: string; quantity?: number | null; diagramRef?: string | null;
-  assemblyCode?: string | null; assemblyName?: string | null; provenance: Provenance;
+  assemblyCode?: string | null; assemblyName?: string | null;
+  /** Client's store page and product photo, when the part comes from the client catalogue. */
+  listingUrl?: string | null; imageUrl?: string | null; provenance: Provenance;
 }
 export interface Spec { key: string; value: string; unit: string | null; provenance: Provenance }
 export interface Fitment {
@@ -78,7 +80,7 @@ export const VEHICLE = "ferrari-488-gtb";
 
 export const statusLabel: Record<Verification, string> = {
   verified: "Verified",
-  publicly_listed: "Public index",
+  publicly_listed: "Listed",
   unverified: "Not verified",
   source_required: "Source required",
   disputed: "Disputed",

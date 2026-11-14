@@ -8,7 +8,7 @@ export function AddPart({ id, label }: { id: number; label: string }) {
   return (
     <button type="button" className={inList ? "btn" : "btn primary"}
       onClick={() => (inList ? shortlist.remove({ kind: "part", ref }) : shortlist.add({ kind: "part", ref, label }))}>
-      {inList ? "✓ In quote list — remove" : "Add part to quote list"}
+      {inList ? "✓ In enquiry list — remove" : "Enquire about this part"}
     </button>
   );
 }

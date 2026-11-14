@@ -28,6 +28,7 @@ export default async function Home() {
           <div className="hero-actions">
             <Link className="btn primary" href={`/vehicles/${v.slug}`}>Open the explorer</Link>
             <Link className="btn" href="/catalog">Search {v.counts.assemblies} assembly groups</Link>
+            <Link className="btn" href="/demo/ferrari-458">3D demo</Link>
           </div>
           <div className="hero-meta">
             <span className="pill neutral">Market index: {v.market ?? "—"}</span>
@@ -54,7 +55,7 @@ export default async function Home() {
               <h3>{v.model}</h3>
               <ul className="vcard-stats">
                 <li><b>{v.counts.assemblies}</b> assembly groups</li>
-                <li><b>{v.counts.verifiedParts}</b> verified parts</li>
+                <li><b>{v.counts.parts}</b> listed parts</li>
                 <li><b>{v.model3d ? "Licensed" : "—"}</b> 3D model</li>
               </ul>
               <span className="vcard-cta">Open explorer <span aria-hidden="true">→</span></span>
@@ -98,6 +99,7 @@ export default async function Home() {
         </div>
         <div className="board">
           <Metric n={v.counts.assemblies} label="Assembly groups" note="Titles from a public 488 GTB (USA) index." pill="publicly_listed" />
+          <Metric n={v.counts.parts} label="Autovivo-listed 488 parts" note="Part numbers and fitment as listed in the store; not yet EPC-checked." pill="publicly_listed" />
           <Metric n={v.counts.verifiedParts} label="Verified individual parts" note="Needs an authorized Ferrari parts catalogue." pill="source_required" />
           <Metric n={v.counts.fitments} label="VIN fitment records" note="Needs VIN-level catalogue access." pill="source_required" />
           <Metric n={v.model3d ? 1 : 0} label="Licensed 3D models" note={v.model3d ? `Licensed from ${v.model3d.licensor}.` : "Awaiting an approved commercial licence."} pill={v.model3d ? "verified" : "source_required"} />

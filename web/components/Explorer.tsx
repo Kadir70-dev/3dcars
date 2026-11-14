@@ -103,7 +103,7 @@ export default function Explorer({ vehicle, assemblies, initialCode }: Props) {
             </div>
             <p className="help locked-tools">
               Isolate, hide/show and step-by-step disassembly switch on with a licensed, part-separated model.{" "}
-              <Link href="/dev/viewer-fixture">Try them on the abstract test fixture →</Link>
+              <Link href="/demo/ferrari-458">Try them on a community 3D Ferrari (458) →</Link>
             </p>
           </div>}
         </section>
@@ -200,7 +200,7 @@ function DetailPanel({ slug, assembly, detail, error, boundParts, selectedPartId
       <div className="detail-actions">
         <button type="button" className={inList ? "btn" : "btn primary"}
           onClick={() => inList ? shortlist.remove({ kind: "assembly", ref: assembly.code }) : shortlist.add({ kind: "assembly", ref: assembly.code, label: `${assembly.code} · ${assembly.name}` })}>
-          {inList ? "✓ In quote list — remove" : "Add group to quote list"}
+          {inList ? "✓ In enquiry list — remove" : "Enquire about this group"}
         </button>
         <Link className="btn" href={`/catalog?assembly=${assembly.code}`}>Search within this group</Link>
       </div>

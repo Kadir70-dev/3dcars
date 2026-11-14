@@ -105,7 +105,8 @@ func TestPublicCatalog(t *testing.T) {
 		t.Fatalf("vehicle: %d %v", code, v)
 	}
 	counts := v["counts"].(map[string]any)
-	if counts["assemblies"].(float64) != 95 || counts["parts"].(float64) != 0 || counts["fitments"].(float64) != 0 {
+	// Seeded client-catalogue parts are listed, never verified.
+	if counts["assemblies"].(float64) != 95 || counts["parts"].(float64) == 0 || counts["verifiedParts"].(float64) != 0 {
 		t.Fatalf("unexpected counts %v", counts)
 	}
 	if v["model3d"] != nil {
@@ -132,6 +133,16 @@ func TestPublicCatalog(t *testing.T) {
 		}
 	}
 
+	// Client part numbers are searchable and keep their store listing + status.
+	_, v = c.do("GET", "/api/v1/vehicles/ferrari-488-gtb/search?q=329267", nil)
+	ps := v["parts"].([]any)
+	if len(ps) != 1 {
+		t.Fatalf("client part 329267 not found: %v", v)
+	}
+	cp := ps[0].(map[string]any)
+	if cp["provenance"].(map[string]any)["verificationStatus"] != "publicly_listed" || cp["listingUrl"] == nil {
+		t.Fatalf("client part provenance: %v", cp)
+	}
 	if code, _ = c.do("GET", "/api/v1/vehicles/ferrari-488-gtb/search?q=%25", nil); code != 200 {
 		t.Fatal("wildcard query should be escaped, not fail")
 	}

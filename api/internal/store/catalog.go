@@ -27,6 +27,8 @@ type PartSummary struct {
 	DiagramRef    *string    `json:"diagramRef,omitempty"`
 	AssemblyCode  *string    `json:"assemblyCode,omitempty"`
 	AssemblyName  *string    `json:"assemblyName,omitempty"`
+	ListingURL    *string    `json:"listingUrl"`
+	ImageURL      *string    `json:"imageUrl"`
 	Provenance    Provenance `json:"provenance"`
 }
 
@@ -101,30 +103,32 @@ func (s *Store) Assemblies(ctx context.Context, slug string, f Filter) ([]Assemb
 	return pgx.CollectRows(rows, scanAssembly)
 }
 
-const partSelect = `SELECT p.id, p.oem_part_number, p.name, ap.quantity, ap.diagram_ref, a.code, a.name, ` + provCols + `
+const partSelect = `SELECT p.id, p.oem_part_number, p.name, ap.quantity, ap.diagram_ref, a.code, a.name, p.listing_url, p.image_url, ` + provCols + `
 	FROM parts p JOIN parts x ON x.id=p.id JOIN sources s ON s.id=p.source_id`
 
 func scanPart(r pgx.CollectableRow) (PartSummary, error) {
 	var p PartSummary
-	err := r.Scan(append([]any{&p.ID, &p.OEMPartNumber, &p.Name, &p.Quantity, &p.DiagramRef, &p.AssemblyCode, &p.AssemblyName}, scanProv(&p.Provenance)...)...)
+	err := r.Scan(append([]any{&p.ID, &p.OEMPartNumber, &p.Name, &p.Quantity, &p.DiagramRef, &p.AssemblyCode, &p.AssemblyName, &p.ListingURL, &p.ImageURL}, scanProv(&p.Provenance)...)...)
 	return p, err
 }
 
-// Parts searches individual parts linked to a vehicle's assemblies.
+// Parts searches individual parts linked to a vehicle's assemblies or listed
+// with a fitment for the vehicle (e.g. client catalogue items not yet mapped to an assembly).
 func (s *Store) Parts(ctx context.Context, slug string, f Filter) ([]PartSummary, error) {
 	v, err := s.vehicleBySlug(ctx, slug)
 	if err != nil {
 		return nil, err
 	}
 	rows, err := s.DB.Query(ctx, partSelect+`
-		JOIN assembly_parts ap ON ap.part_id=p.id
-		JOIN assemblies a ON a.id=ap.assembly_id
+		LEFT JOIN assembly_parts ap ON ap.part_id=p.id
+		  AND ap.assembly_id IN (SELECT id FROM assemblies WHERE vehicle_id=$1)
+		LEFT JOIN assemblies a ON a.id=ap.assembly_id
 		LEFT JOIN vehicle_systems vs ON vs.id=a.system_id
-		WHERE a.vehicle_id=$1
+		WHERE (a.id IS NOT NULL OR EXISTS (SELECT 1 FROM fitments f WHERE f.part_id=p.id AND f.vehicle_id=$1))
 		  AND ($2='' OR lower(p.name) LIKE $3 OR lower(coalesce(p.oem_part_number,'')) LIKE $3)
 		  AND ($4='' OR vs.slug=$4)
 		  AND ($5='' OR a.code=$5)
-		ORDER BY a.code, p.name LIMIT 200`, v.ID, strings.TrimSpace(f.Query), like(f.Query), f.System, f.Assembly)
+		ORDER BY a.code NULLS LAST, p.name LIMIT 200`, v.ID, strings.TrimSpace(f.Query), like(f.Query), f.System, f.Assembly)
 	if err != nil {
 		return nil, err
 	}
@@ -146,16 +150,16 @@ func (s *Store) AssemblyDetail(ctx context.Context, slug, code string) (*Assembl
 
 func (s *Store) PartDetail(ctx context.Context, id int64) (*PartDetail, error) {
 	var d PartDetail
-	err := s.DB.QueryRow(ctx, `SELECT p.id, p.oem_part_number, p.name, p.description, p.revision, `+provCols+`
+	err := s.DB.QueryRow(ctx, `SELECT p.id, p.oem_part_number, p.name, p.description, p.revision, p.listing_url, p.image_url, `+provCols+`
 		FROM parts p JOIN parts x ON x.id=p.id JOIN sources s ON s.id=p.source_id WHERE p.id=$1`, id).
-		Scan(append([]any{&d.ID, &d.OEMPartNumber, &d.Name, &d.Description, &d.Revision}, scanProv(&d.Provenance)...)...)
+		Scan(append([]any{&d.ID, &d.OEMPartNumber, &d.Name, &d.Description, &d.Revision, &d.ListingURL, &d.ImageURL}, scanProv(&d.Provenance)...)...)
 	if errors.Is(err, pgx.ErrNoRows) {
 		return nil, ErrNotFound
 	}
 	if err != nil {
 		return nil, err
 	}
-	rows, err := s.DB.Query(ctx, `SELECT p.id, p.oem_part_number, p.name, x.quantity, x.diagram_ref, a.code, a.name,
+	rows, err := s.DB.Query(ctx, `SELECT p.id, p.oem_part_number, p.name, x.quantity, x.diagram_ref, a.code, a.name, p.listing_url, p.image_url,
 		s.id, s.title, s.source_type::text, s.url, x.source_ref, x.checked_on, NULL::text, x.verification_status::text
 		FROM assembly_parts x JOIN parts p ON p.id=x.part_id JOIN assemblies a ON a.id=x.assembly_id
 		JOIN vehicles v ON v.id=a.vehicle_id AND v.is_active

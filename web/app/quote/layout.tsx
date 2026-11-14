@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Quote list",
+  title: "Enquiry list",
   description: "Request a manual quote for Ferrari 488 GTB assemblies or parts. No prices or checkout.",
   robots: { index: false },
 };

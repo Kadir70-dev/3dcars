@@ -1,7 +1,9 @@
 import type { Metadata } from "next";
+import Image from "next/image";
 import Link from "next/link";
 import { api, VEHICLE, type Assembly, type PartSummary, type VehicleDetail } from "@/lib/api";
 import { StatusPill } from "@/components/Status";
+import { AddPart } from "@/components/AddPart";
 import { ApiDown } from "@/components/ApiDown";
 
 export const metadata: Metadata = {
@@ -32,11 +34,11 @@ export default async function Catalog({ searchParams }: SP) {
       <header className="page-head">
         <div className="eyebrow">Ferrari 488 GTB · catalog</div>
         <h1>Search <em>parts &amp; assemblies.</em></h1>
-        <p>Search by part name, OEM number, assembly name or group number. Filter by vehicle system or assembly. Results work without JavaScript and can be shared by URL.</p>
+        <p>Search Autovivo’s listed 488 parts and the 95 assembly groups by name, part number or group number. Prices on request. Filter by vehicle system or assembly. Results work without JavaScript and can be shared by URL.</p>
       </header>
 
       <form className="card catalog" method="get" role="search" style={{ marginTop: 0 }}>
-        <div className="tools" style={{ gridTemplateColumns: "1fr 220px 260px auto" }}>
+        <div className="tools catalog-tools">
           <label className="search-wrap">
             <span className="sr-only">Search term</span>
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true"><circle cx="11" cy="11" r="7" /><path d="m20 20-3.5-3.5" /></svg>
@@ -70,21 +72,28 @@ export default async function Catalog({ searchParams }: SP) {
               : "No parts match these filters."}
           </div>
         ) : (
-          <div className="card table-wrap">
-            <table className="data-table">
-              <thead><tr><th>Part</th><th>OEM number</th><th>Assembly</th><th>Qty</th><th>Status</th></tr></thead>
-              <tbody>
-                {res.parts.map((p) => (
-                  <tr key={`${p.id}-${p.assemblyCode}-${p.diagramRef}`}>
-                    <td><Link href={`/parts/${p.id}`}>{p.name}</Link></td>
-                    <td className="mono">{p.oemPartNumber ?? <span className="muted">Not verified</span>}</td>
-                    <td>{p.assemblyCode} · {p.assemblyName}</td>
-                    <td>{p.quantity ?? "—"}</td>
-                    <td><StatusPill status={p.provenance.verificationStatus} /></td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+          <div className="product-grid">
+            {res.parts.map((p) => (
+              <article className="card product" key={`${p.id}-${p.assemblyCode}-${p.diagramRef}`}>
+                <Link href={`/parts/${p.id}`} className="product-img" tabIndex={-1} aria-hidden="true">
+                  {p.imageUrl
+                    ? <Image src={p.imageUrl} alt="" fill sizes="(max-width: 720px) 100vw, 300px" />
+                    : <span className="muted">No photo</span>}
+                </Link>
+                <div className="product-body">
+                  <div className="product-top">
+                    <span className="mono">{p.oemPartNumber ?? "No part no."}</span>
+                    <StatusPill status={p.provenance.verificationStatus} />
+                  </div>
+                  <h3><Link href={`/parts/${p.id}`}>{p.name}</Link></h3>
+                  <p className="muted">{p.assemblyCode ? `${p.assemblyCode} · ${p.assemblyName}` : "Assembly group not mapped yet"}</p>
+                  <div className="product-actions">
+                    <AddPart id={p.id} label={`${p.oemPartNumber ?? "No part no."} · ${p.name}`} />
+                    {p.listingUrl && <a className="btn small" href={p.listingUrl} target="_blank" rel="noreferrer">Autovivo store ↗</a>}
+                  </div>
+                </div>
+              </article>
+            ))}
           </div>
         )}
       </section>

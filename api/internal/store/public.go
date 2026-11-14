@@ -170,7 +170,8 @@ func (s *Store) VehicleDetail(ctx context.Context, slug string) (*VehicleDetail,
 
 	err = s.DB.QueryRow(ctx, `SELECT
 		(SELECT count(*) FROM assemblies WHERE vehicle_id=$1),
-		(SELECT count(DISTINCT ap.part_id) FROM assembly_parts ap JOIN assemblies a ON a.id=ap.assembly_id WHERE a.vehicle_id=$1),
+		(SELECT count(DISTINCT p.id) FROM parts p WHERE EXISTS (SELECT 1 FROM assembly_parts ap JOIN assemblies a ON a.id=ap.assembly_id WHERE ap.part_id=p.id AND a.vehicle_id=$1)
+			OR EXISTS (SELECT 1 FROM fitments f WHERE f.part_id=p.id AND f.vehicle_id=$1)),
 		(SELECT count(DISTINCT p.id) FROM parts p JOIN assembly_parts ap ON ap.part_id=p.id JOIN assemblies a ON a.id=ap.assembly_id
 		   WHERE a.vehicle_id=$1 AND p.verification_status='verified'),
 		(SELECT count(*) FROM fitments WHERE vehicle_id=$1),

@@ -36,7 +36,7 @@ export default function QuotePage() {
   return (
     <div className="wrap">
       <header className="page-head">
-        <div className="eyebrow">Quote list</div>
+        <div className="eyebrow">Enquiry list</div>
         <h1>Request a <em>quote.</em></h1>
         <p>Send the groups and parts you are interested in. This is a request for manual follow-up only — no price, stock, payment or order is created,
           and nothing is confirmed until we check fitment against your VIN with an authorized source.</p>
@@ -53,7 +53,7 @@ export default function QuotePage() {
             <div className="admin-toolbar"><h2 id="items-h" style={{ fontSize: 26 }}>Items ({items.length})</h2>
               {items.length > 0 && <button type="button" className="btn small" onClick={() => shortlist.clear()}>Clear all</button>}</div>
             {items.length === 0 ? (
-              <div className="empty" style={{ margin: 18 }}>Your quote list is empty. <Link href="/vehicles/ferrari-488-gtb">Open the explorer</Link> and add an assembly group or part.</div>
+              <div className="empty" style={{ margin: 18 }}>Your enquiry list is empty. <Link href="/vehicles/ferrari-488-gtb">Open the explorer</Link> and add an assembly group or part.</div>
             ) : (
               <table className="data-table">
                 <thead><tr><th>Type</th><th>Item</th><th><span className="sr-only">Remove</span></th></tr></thead>
