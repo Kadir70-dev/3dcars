@@ -375,6 +375,24 @@ dialog::backdrop { background: #000a; backdrop-filter: blur(3px); }
 .demo-page .missing-grid .card { border: 0; background: none; padding-left: 0; padding-right: 0; }
 @media (max-width: 720px) { .workbench .viewer-tag { position: static; margin: 0 0 6px; } .workbench .viewer-tag .pill { white-space: normal; } }
 
+.concept-gallery { padding-top: 76px; }
+.concept-gallery .section-head { margin-bottom: 22px; }
+.concept-gallery .section-head h2 { margin-top: 10px; }
+.concept-gallery-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+.concept-visual-card { margin: 0; overflow: hidden; border: 1px solid var(--line); border-radius: 10px; background: var(--bg-2); }
+.concept-visual-card:first-child { grid-column: 1 / -1; }
+.concept-visual-card img { display: block; width: 100%; height: auto; background: #101214; }
+.concept-visual-card figcaption { display: flex; justify-content: space-between; gap: 16px; padding: 13px 16px; font-size: 12px; }
+.concept-visual-card figcaption strong { color: var(--text); font: 600 10px var(--mono); letter-spacing: .1em; text-transform: uppercase; }
+.concept-visual-card figcaption span, .concept-gallery-note { color: var(--muted); }
+.concept-gallery-note { max-width: 760px; margin-top: 16px; font-size: 12px; line-height: 1.7; }
+@media (max-width: 680px) {
+  .concept-gallery { padding-top: 56px; }
+  .concept-gallery-grid { grid-template-columns: 1fr; }
+  .concept-visual-card:first-child { grid-column: auto; }
+  .concept-visual-card figcaption { flex-direction: column; gap: 5px; }
+}
+
 /* Full-screen demo: no site chrome, no frame — the car fills the window. */
 body:has(.fs-demo) .topbar, body:has(.fs-demo) header.nav, body:has(.fs-demo) .mobile-nav, body:has(.fs-demo) footer.footer { display: none; }
 body:has(.fs-demo) { overflow: hidden; }
