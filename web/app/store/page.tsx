@@ -5,6 +5,7 @@ import { api, type StoreResponse } from "@/lib/api";
 import { StatusPill } from "@/components/Status";
 import { AddPart } from "@/components/AddPart";
 import { ApiDown } from "@/components/ApiDown";
+import TiltGrid from "@/components/TiltGrid";
 
 export const metadata: Metadata = {
   title: "All parts — Ferrari, Lamborghini, Maserati",
@@ -78,11 +79,13 @@ export default async function Store({ searchParams }: SP) {
         {total} part{total === 1 ? "" : "s"}{brand ? ` · ${brand}` : ""}{model ? ` · fits ${model}` : ""}{q ? ` · “${q}”` : ""}
       </p>
       {parts.length === 0 ? <div className="empty">No parts match. Try a shorter search or another model.</div> : (
-        <div className="product-grid">
+        <TiltGrid className="product-grid elite-grid">
           {parts.map((p) => (
-            <article className="card product" key={p.id}>
+            <article className="product elite" key={p.id}>
               <Link href={`/parts/${p.id}`} className="product-img" tabIndex={-1} aria-hidden="true">
-                {p.imageUrl ? <Image src={p.imageUrl} alt="" fill sizes="(max-width: 720px) 100vw, 300px" /> : <span className="muted">No photo</span>}
+                <span className="product-float">
+                  {p.imageUrl ? <Image src={p.imageUrl} alt="" fill sizes="(max-width: 720px) 100vw, 300px" /> : <span className="muted">No photo</span>}
+                </span>
               </Link>
               <div className="product-body">
                 <div className="product-top">
@@ -92,13 +95,13 @@ export default async function Store({ searchParams }: SP) {
                 <h3><Link href={`/parts/${p.id}`}>{p.name}</Link></h3>
                 <p className="muted">{p.brand}{p.fitModels.length ? ` · fits ${p.fitModels.slice(0, 3).join(", ")}${p.fitModels.length > 3 ? "…" : ""}` : ""}</p>
                 <div className="product-actions">
-                  <AddPart id={p.id} label={`${p.oemPartNumber ?? "No part no."} · ${p.name}`} />
-                  {p.listingUrl && <a className="btn small" href={p.listingUrl} target="_blank" rel="noreferrer">Autovivo store ↗</a>}
+                  <AddPart compact id={p.id} label={`${p.oemPartNumber ?? "No part no."} · ${p.name}`} />
+                  {p.listingUrl && <a className="store-link" href={p.listingUrl} target="_blank" rel="noreferrer" aria-label={`View ${p.name} in the Autovivo store`}>Store ↗</a>}
                 </div>
               </div>
             </article>
           ))}
-        </div>
+        </TiltGrid>
       )}
       {pages > 1 && (
         <nav className="pager" aria-label="Pages">
