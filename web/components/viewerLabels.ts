@@ -22,7 +22,7 @@ export class LabelLayer {
   private a = new THREE.Vector3();
   private b = new THREE.Vector3();
 
-  constructor(host: HTMLElement, labels: Record<string, string>, names: Iterable<string>, onPick: (name: string) => void) {
+  constructor(host: HTMLElement, labels: Record<string, string>, names: Iterable<string>, onPick: (name: string) => void, private lines = true) {
     this.root = document.createElement("div");
     this.root.className = "viewer-labels";
     this.root.setAttribute("aria-hidden", "true");
@@ -74,11 +74,12 @@ export class LabelLayer {
       el.className = `vlabel${focus ? "" : " past"}${lit.has(name) ? " lit" : ""}`;
       // Nudge the label upwards until it no longer overlaps one already placed.
       const lw = el.offsetWidth + 4, lh = el.offsetHeight + 3;
-      let ly = by - lh * 0.9;
+      // Without connector lines the label sits right on its part so it stays clearly attached.
+      let ly = this.lines ? by - lh * 0.9 : by;
       for (let i = 0; i < 12 && placed.some((q) => Math.abs(q.x - bx) < (q.w + lw) / 2 && Math.abs(q.y - ly) < (q.h + lh) / 2); i++) ly -= lh;
       placed.push({ x: bx, y: ly, w: lw, h: lh });
       el.style.transform = `translate(${bx.toFixed(1)}px, ${ly.toFixed(1)}px) translate(-50%, -50%)`;
-      if (t > 0.05) {
+      if (this.lines && t > 0.05) {
         line.style.display = "";
         line.setAttribute("x1", ax.toFixed(1)); line.setAttribute("y1", ay.toFixed(1));
         line.setAttribute("x2", bx.toFixed(1)); line.setAttribute("y2", ly.toFixed(1));

@@ -31,7 +31,7 @@ export default function FullscreenDemo() {
 
   return (
     <div className="fs-demo">
-      <Viewer3D source={SOURCE} bindings={DEMO458_BINDINGS} bare staggerMs={90}
+      <Viewer3D source={SOURCE} bindings={DEMO458_BINDINGS} bare spin360 labelLines={false} staggerMs={90}
         label="Community 3D model of a Ferrari 458 Italia (not the 488 GTB, not OEM data). Drag to rotate, scroll or pinch to zoom, click a part to inspect it."
         highlighted={m.highlighted} exploded={m.exploded} hidden={m.hidden} isolate={m.isolate}
         focusNonce={m.focusNonce} resetNonce={m.resetNonce}

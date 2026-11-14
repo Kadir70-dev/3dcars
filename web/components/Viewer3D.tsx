@@ -46,6 +46,10 @@ interface Props {
   staggerMs?: number;
   /** Hide the zoom / reset buttons (gestures still work). */
   bare?: boolean;
+  /** Draw connector lines from labels back to where each part sits (default true). */
+  labelLines?: boolean;
+  /** Allow orbiting all the way round, including from below, and spin slowly when idle. */
+  spin360?: boolean;
 }
 
 export interface MeshStats { triangles: number; sourceMesh: string; islands: number | null }
@@ -117,7 +121,18 @@ export default function Viewer3D(props: Props) {
     const camera = new THREE.PerspectiveCamera(35, 1, 0.01, 1000);
     const controls = new OrbitControls(camera, renderer.domElement);
     controls.enableDamping = true;
-    controls.maxPolarAngle = Math.PI * 0.49;
+    controls.maxPolarAngle = props.spin360 ? Math.PI : Math.PI * 0.49;
+    // Idle showcase spin: stops while the visitor drags, resumes a few seconds later.
+    let resumeSpin = 0;
+    if (props.spin360) {
+      controls.autoRotate = !window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+      controls.autoRotateSpeed = 1.2;
+      controls.addEventListener("start", () => { controls.autoRotate = false; window.clearTimeout(resumeSpin); });
+      controls.addEventListener("end", () => {
+        window.clearTimeout(resumeSpin);
+        resumeSpin = window.setTimeout(() => { controls.autoRotate = !window.matchMedia("(prefers-reduced-motion: reduce)").matches; }, 4000);
+      });
+    }
 
     const resize = () => {
       const { width, height } = el.getBoundingClientRect();
@@ -173,7 +188,7 @@ export default function Viewer3D(props: Props) {
         rest: new Map([...bound].map(([n, o]) => [n, new THREE.Box3().setFromObject(o).getCenter(new THREE.Vector3())])),
         worldOff: new Map([...worldTargets].map(([n, v]) => [n, new THREE.Vector3(...v)])),
         offNow: new Map([...bound.keys()].map((n) => [n, new THREE.Vector3()])),
-        labels: lbl ? new LabelLayer(el, lbl, bound.keys(), (n) => pickRef.current(n)) : null,
+        labels: lbl ? new LabelLayer(el, lbl, bound.keys(), (n) => pickRef.current(n), props.labelLines !== false) : null,
         hover: null,
         bound, meshes,
         base: new Map([...bound].map(([n, o]) => [n, o.position.clone()])),
@@ -294,6 +309,7 @@ export default function Viewer3D(props: Props) {
       renderer.domElement.removeEventListener("pointermove", onMove);
       renderer.domElement.removeEventListener("pointerleave", onLeave);
       rt.current?.labels?.dispose();
+      window.clearTimeout(resumeSpin);
       scene.traverse((o) => {
         const m = o as THREE.Mesh;
         if (m.isMesh) {
@@ -306,7 +322,7 @@ export default function Viewer3D(props: Props) {
       el.removeChild(renderer.domElement);
       rt.current = null;
     };
-  }, [source, bindings]);
+  }, [source, bindings, props.labelLines, props.spin360]);
 
   // Explode targets per mesh.
   useEffect(() => {
