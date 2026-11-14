@@ -385,3 +385,12 @@ body:has(.fs-demo) { overflow: hidden; }
   font: 600 11px var(--sans); letter-spacing: .08em; text-transform: uppercase; backdrop-filter: blur(6px); }
 .fs-btn:hover { border-color: #ffffff66; }
 .fs-btn[aria-pressed="true"] { background: var(--red); border-color: var(--red); color: #fff; }
+
+/* All-parts store page */
+.brand-tabs { display: flex; flex-wrap: wrap; gap: 8px; }
+.brand-tabs a { border: 1px solid var(--line-2); border-radius: 999px; padding: 8px 14px; text-decoration: none; font-size: 13px; color: var(--muted); }
+.brand-tabs a[aria-current="page"] { border-color: var(--red); color: #fff; background: #e2293222; }
+.store-tools { grid-template-columns: 1fr 260px auto; }
+.pager { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin: 24px 0; }
+@media (max-width: 720px) { .store-tools { grid-template-columns: 1fr; } }
+.fit-list { margin: 8px 0 0; padding-left: 18px; columns: 2; font-size: 13px; color: var(--muted); }

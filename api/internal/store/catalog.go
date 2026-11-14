@@ -53,6 +53,8 @@ type PartDetail struct {
 	PartSummary
 	Description *string       `json:"description"`
 	Revision    *string       `json:"revision"`
+	Brand       *string       `json:"brand"`
+	FitModels   []string      `json:"fitModels"`
 	Assemblies  []PartSummary `json:"assemblies"` // assembly memberships (quantity/diagramRef per link)
 	Specs       []Spec        `json:"specs"`
 	Fitments    []Fitment     `json:"fitments"`
@@ -150,9 +152,9 @@ func (s *Store) AssemblyDetail(ctx context.Context, slug, code string) (*Assembl
 
 func (s *Store) PartDetail(ctx context.Context, id int64) (*PartDetail, error) {
 	var d PartDetail
-	err := s.DB.QueryRow(ctx, `SELECT p.id, p.oem_part_number, p.name, p.description, p.revision, p.listing_url, p.image_url, `+provCols+`
+	err := s.DB.QueryRow(ctx, `SELECT p.id, p.oem_part_number, p.name, p.description, p.revision, p.listing_url, p.image_url, p.brand, p.fit_models, `+provCols+`
 		FROM parts p JOIN parts x ON x.id=p.id JOIN sources s ON s.id=p.source_id WHERE p.id=$1`, id).
-		Scan(append([]any{&d.ID, &d.OEMPartNumber, &d.Name, &d.Description, &d.Revision, &d.ListingURL, &d.ImageURL}, scanProv(&d.Provenance)...)...)
+		Scan(append([]any{&d.ID, &d.OEMPartNumber, &d.Name, &d.Description, &d.Revision, &d.ListingURL, &d.ImageURL, &d.Brand, &d.FitModels}, scanProv(&d.Provenance)...)...)
 	if errors.Is(err, pgx.ErrNoRows) {
 		return nil, ErrNotFound
 	}

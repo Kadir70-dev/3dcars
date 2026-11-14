@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"net/mail"
 	"regexp"
+	"strconv"
 	"strings"
 
 	"github.com/Kadir70-dev/3dcars/api/internal/store"
@@ -162,4 +163,41 @@ func (s *Server) createQuote(w http.ResponseWriter, r *http.Request) {
 		"status": "received",
 		"note":   "Request stored for manual review. No price, availability or order has been confirmed, and no automatic email is sent.",
 	})
+}
+
+var modelParam = regexp.MustCompile(`^[A-Za-z0-9 -]{0,40}$`)
+
+// storeParts lists the client's store catalogue: ?brand=&q=&model=&page=
+func (s *Server) storeParts(w http.ResponseWriter, r *http.Request) {
+	v := r.URL.Query()
+	brand := v.Get("brand")
+	switch brand {
+	case "", "Ferrari", "Lamborghini", "Maserati":
+	default:
+		writeJSON(w, http.StatusBadRequest, map[string]any{"error": "unknown brand"})
+		return
+	}
+	model := strings.TrimSpace(v.Get("model"))
+	if !modelParam.MatchString(model) {
+		writeJSON(w, http.StatusBadRequest, map[string]any{"error": "invalid model"})
+		return
+	}
+	page := 1
+	if p := v.Get("page"); p != "" {
+		n, err := strconv.Atoi(p)
+		if err != nil || n < 1 || n > 200 {
+			writeJSON(w, http.StatusBadRequest, map[string]any{"error": "invalid page"})
+			return
+		}
+		page = n
+	}
+	const perPage = 48
+	res, err := s.Store.StoreParts(r.Context(), store.StoreQuery{
+		Brand: brand, Query: filterFrom(r).Query, Model: model, Limit: perPage, Offset: (page - 1) * perPage,
+	})
+	if err != nil {
+		fail(w, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, map[string]any{"page": page, "perPage": perPage, "result": res})
 }

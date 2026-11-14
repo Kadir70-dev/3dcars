@@ -143,6 +143,22 @@ func TestPublicCatalog(t *testing.T) {
 	if cp["provenance"].(map[string]any)["verificationStatus"] != "publicly_listed" || cp["listingUrl"] == nil {
 		t.Fatalf("client part provenance: %v", cp)
 	}
+	// The whole client store catalogue is browsable by brand and model, never verified.
+	code, v = c.do("GET", "/api/v1/store-parts?brand=Lamborghini&model=centenario", nil)
+	res := v["result"].(map[string]any)
+	if code != 200 || res["total"].(float64) == 0 || res["brands"].(map[string]any)["Maserati"] == nil {
+		t.Fatalf("store parts: %d %v", code, v)
+	}
+	for _, p := range res["parts"].([]any) {
+		if p.(map[string]any)["provenance"].(map[string]any)["verificationStatus"] != "publicly_listed" {
+			t.Fatal("store parts must be publicly_listed")
+		}
+	}
+	for _, bad := range []string{"brand=Porsche", "model=%3Cscript%3E", "page=0", "page=abc"} {
+		if code, _ = c.do("GET", "/api/v1/store-parts?"+bad, nil); code != 400 {
+			t.Fatalf("%s should be rejected, got %d", bad, code)
+		}
+	}
 	if code, _ = c.do("GET", "/api/v1/vehicles/ferrari-488-gtb/search?q=%25", nil); code != 200 {
 		t.Fatal("wildcard query should be escaped, not fail")
 	}

@@ -5,6 +5,7 @@ import { useShortlist } from "@/lib/shortlist";
 
 const links = [
   { href: "/vehicles/ferrari-488-gtb", label: "Explorer" },
+  { href: "/store", label: "All parts" },
   { href: "/catalog", label: "Catalog" },
   { href: "/sources", label: "Sources" },
 ];
@@ -60,6 +61,7 @@ export function Footer() {
         </div>
         <nav aria-label="Footer">
           <Link href="/vehicles/ferrari-488-gtb">Explorer</Link>
+          <Link href="/store">All parts</Link>
           <Link href="/catalog">Catalog</Link>
           <Link href="/sources">Sources &amp; data gaps</Link>
           <Link href="/quote">Enquiry list</Link>

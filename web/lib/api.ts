@@ -48,8 +48,14 @@ export interface Fitment {
 }
 export interface PartDetail extends PartSummary {
   description: string | null; revision: string | null; assemblies: PartSummary[]; specs: Spec[]; fitments: Fitment[];
+  brand?: string | null; fitModels?: string[];
 }
 export interface AssemblyDetail extends Assembly { parts: PartSummary[] }
+export interface StorePart extends PartSummary { brand: string | null; fitModels: string[] }
+export interface StoreResponse {
+  page: number; perPage: number;
+  result: { parts: StorePart[]; total: number; brands: Record<string, number>; models: { model: string; parts: number }[] };
+}
 export interface Source {
   id: number; title: string; publisher: string; sourceType: string; url: string | null;
   licenseNotes: string | null; accessRequirements: string | null;

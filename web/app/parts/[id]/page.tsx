@@ -63,6 +63,13 @@ export default async function PartPage({ params }: P) {
               </table></div>
             )}
           </section>
+          {p.fitModels && p.fitModels.length > 0 && (
+            <section className="card row-card">
+              <h2 style={{ fontSize: 26 }}>Fits (as listed by the store)</h2>
+              <p className="muted">{p.brand ? `${p.brand} · ` : ""}Copied from the Autovivo listing; not checked against the manufacturer’s catalogue.</p>
+              <ul className="fit-list">{p.fitModels.map((f) => <li key={f}>{f}</li>)}</ul>
+            </section>
+          )}
           <section className="card row-card">
             <h2 style={{ fontSize: 26 }}>Used in</h2>
             {p.assemblies.length === 0 && <p>Not yet mapped to one of the 95 assembly groups.</p>}

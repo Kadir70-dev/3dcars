@@ -29,6 +29,7 @@ export default async function Home() {
             <Link className="btn primary" href={`/vehicles/${v.slug}`}>Open the explorer</Link>
             <Link className="btn" href="/catalog">Search {v.counts.assemblies} assembly groups</Link>
             <Link className="btn" href="/demo/ferrari-458">3D demo</Link>
+            <Link className="btn" href="/store">All parts</Link>
           </div>
           <div className="hero-meta">
             <span className="pill neutral">Market index: {v.market ?? "—"}</span>

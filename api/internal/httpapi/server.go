@@ -42,6 +42,7 @@ func (s *Server) Handler() http.Handler {
 	mux.HandleFunc("GET /api/v1/vehicles/{slug}/assemblies/{code}", s.getAssembly)
 	mux.HandleFunc("GET /api/v1/vehicles/{slug}/search", s.search)
 	mux.HandleFunc("GET /api/v1/parts/{id}", s.getPart)
+	mux.HandleFunc("GET /api/v1/store-parts", s.storeParts)
 	mux.HandleFunc("GET /api/v1/sources", s.listSources)
 	mux.HandleFunc("POST /api/v1/quotes", s.limited(s.createQuote))
 
