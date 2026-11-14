@@ -41,10 +41,6 @@ export default async function VehiclePage({ params, searchParams }: Params) {
           <div className="eyebrow">{v.make} · {v.market ?? "All markets"} index</div>
           <h1 style={{ fontSize: "clamp(40px,5.5vw,72px)", marginTop: 12 }}>{v.model} <em>explorer</em></h1>
         </div>
-        <p className="muted" style={{ maxWidth: 440, margin: 0 }}>
-          Select a region of the car or any group below. Details, parts and sources update alongside.
-          Drag to rotate and scroll to zoom when a licensed 3D model is available.
-        </p>
       </div>
       <Explorer vehicle={v} assemblies={list} initialCode={initial} />
     </div>

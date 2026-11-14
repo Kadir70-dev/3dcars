@@ -498,3 +498,19 @@ body { background: radial-gradient(1100px 520px at 85% -8%, #ffe3dc 0%, transpar
 }
 @media (max-width: 1000px) { .marques { grid-template-columns: 1fr; } .stats { grid-template-columns: repeat(2, 1fr); } .split { grid-template-columns: 1fr; } }
 @media (max-width: 720px) { .hero-apple { padding-top: 72px; } .scroll-car { height: 300vh; } .section { padding-top: 88px; } .scroll-car-captions { top: 132px; } }
+
+/* Embedded 3D stage with marque tabs (explorer, home) */
+.car-switcher { display: grid; gap: 14px; }
+.car-tabs { display: flex; gap: 6px; padding: 5px; border: 1px solid var(--line); border-radius: 999px; background: #ffffffcc; width: fit-content; max-width: 100%; overflow-x: auto; justify-self: center; }
+.car-tab { display: grid; gap: 1px; text-align: center; border: 0; background: transparent; border-radius: 999px; padding: 8px 18px; min-height: 44px; color: var(--muted); }
+.car-tab b { font: 600 13px var(--sans); color: var(--text); }
+.car-tab span { font-size: 11px; }
+.car-tab[aria-selected="true"] { background: var(--red); color: #ffffffd9; box-shadow: 0 8px 20px -10px #c8102e99; }
+.car-tab[aria-selected="true"] b { color: #fff; }
+.car-embed { position: relative; height: clamp(360px, 62vh, 640px); }
+.car-embed .viewer-canvas { position: absolute; inset: 0; aspect-ratio: auto; background: none; border-radius: 0; }
+.car-embed-actions { position: absolute; left: 50%; bottom: 14px; transform: translateX(-50%); z-index: 5; display: flex; gap: 8px; }
+.car-embed-actions .fs-btn, .car-embed-actions button { border: 1px solid var(--line-2); background: #ffffffd9; color: var(--text); border-radius: 999px; padding: 7px 16px; font: 600 11px var(--sans); letter-spacing: .08em; text-transform: uppercase; box-shadow: 0 8px 24px -12px #5a1a1a55; }
+.car-embed-actions button[aria-pressed="true"] { background: var(--red); border-color: var(--red); color: #fff; }
+.explorer .viewer.car-stage { background: radial-gradient(70% 60% at 50% 60%, #ffffff, #fdf2ef 75%); padding-top: 14px; }
+.split-stage { padding: 14px 10px 0; background: radial-gradient(70% 60% at 50% 60%, #ffffff, #fdf2ef 75%); }

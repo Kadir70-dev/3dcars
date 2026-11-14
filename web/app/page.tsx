@@ -3,7 +3,8 @@ import dynamicImport from "next/dynamic";
 import { api, formatDate, VEHICLE, type StoreResponse, type VehicleDetail } from "@/lib/api";
 import { DEMO458_ATTRIBUTION, DEMO458_BINDINGS } from "@/lib/demo458";
 import { LAMBO_PART_COUNT } from "@/lib/demoLambo";
-import { Schematic } from "@/components/Schematic";
+import LazyMount from "@/components/LazyMount";
+import CarSwitcher from "@/components/CarSwitcher";
 import { StatusPill } from "@/components/Status";
 import { ApiDown } from "@/components/ApiDown";
 import type { Caption } from "@/components/ScrollCar";
@@ -84,7 +85,7 @@ export default async function Home() {
       <section className="wrap section reveal" aria-labelledby="explorer-h">
         <div className="split">
           <div>
-            <div className="eyebrow">Ferrari 488 GTB</div>
+            <div className="eyebrow">Ferrari · Lamborghini · Maserati</div>
             <h2 id="explorer-h">Find parts <em>by system.</em></h2>
             <p className="muted">Browse the 488 GTB by its {v.counts.assemblies} assembly groups, with {v.counts.parts} Autovivo-listed parts and the source of every record.</p>
             <div className="hero-actions">
@@ -92,10 +93,7 @@ export default async function Home() {
               <Link className="btn" href="/catalog">Search groups</Link>
             </div>
           </div>
-          <Link href={`/vehicles/${v.slug}`} className="stage light-stage" aria-label="Open the 488 GTB explorer">
-            <span className="stage-label">Illustrative schematic</span>
-            <Schematic className="schematic" />
-          </Link>
+          <div className="card split-stage"><LazyMount minHeight={460}><CarSwitcher /></LazyMount></div>
         </div>
       </section>
 
