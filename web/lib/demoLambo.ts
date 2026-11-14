@@ -159,9 +159,26 @@ const PARTS: Part[] = [
   { mesh: "Object_45", name: "Footwell trim", system: "INT-CABIN", c: [0.01, 0.52, 0.46], d: 1.0 },
   { mesh: "Object_44", name: "Cabin floor and tub", system: "STRUCT", c: [-0.02, 0.55, 0.05], d: 0.7 },
 
-  // Engine bay (mid-engine, behind the cabin).
-  { mesh: "Object_61", name: "Engine (chrome parts)", system: "STRUCT", c: [0.04, 0.81, -1.48], d: 1.6 },
-  { mesh: "Object_60", name: "Engine (plastic parts)", system: "STRUCT", c: [0.04, 0.79, -1.33], d: 1.25 },
+  // Engine bay (mid-engine, behind the cabin): the visible top of the engine, separated
+  // along its own geometry islands. Nothing inside the engine is modelled in this file.
+  { mesh: "eng_brace_mid", name: "Engine-bay cross brace (middle)", system: "ENGINE", c: [0.05, 0.9, -1.31], d: 2.6, source: "Object_60", rule: at([0.05, 0.9, -1.31]) },
+  { mesh: "eng_brace_rear", name: "Engine-bay cross brace (rear)", system: "ENGINE", c: [0.04, 0.82, -1.68], d: 2.45, source: "Object_60", rule: at([0.04, 0.82, -1.68]) },
+  { mesh: "eng_rings_l", name: "Engine chrome rings & bolts (left)", system: "ENGINE", c: [0.36, 0.84, -1.24], d: 2.3, source: "Object_61", rule: box([0.28, 0.74, -1.45], [0.45, 0.92, -1.05]) },
+  { mesh: "eng_rings_r", name: "Engine chrome rings & bolts (right)", system: "ENGINE", c: [-0.26, 0.84, -1.23], d: 2.3, source: "Object_61", rule: box([-0.34, 0.74, -1.45], [-0.18, 0.92, -1.05]) },
+  { mesh: "eng_housing_lf", name: "Engine top housing (left-front)", system: "ENGINE", c: [0.48, 0.84, -1.16], d: 2.05, source: "Object_60", rule: at([0.48, 0.84, -1.16]) },
+  { mesh: "eng_housing_lr", name: "Engine top housing (left-rear)", system: "ENGINE", c: [0.52, 0.82, -1.35], d: 2.05, source: "Object_60", rule: at([0.52, 0.82, -1.35]) },
+  { mesh: "eng_housing_rf", name: "Engine top housing (right-front)", system: "ENGINE", c: [-0.38, 0.84, -1.13], d: 2.05, source: "Object_60", rule: at([-0.38, 0.84, -1.13]) },
+  { mesh: "eng_housing_rr", name: "Engine top housing (right-rear)", system: "ENGINE", c: [-0.42, 0.82, -1.33], d: 2.05, source: "Object_60", rule: at([-0.42, 0.82, -1.33]) },
+  { mesh: "eng_chrome_rear_l", name: "Engine chrome rear piece (left)", system: "ENGINE", c: [0.32, 0.77, -1.84], d: 1.85, source: "Object_61", rule: at([0.32, 0.77, -1.84]) },
+  { mesh: "eng_chrome_rear_r", name: "Engine chrome rear piece (right)", system: "ENGINE", c: [-0.24, 0.77, -1.83], d: 1.85, source: "Object_61", rule: at([-0.24, 0.77, -1.83]) },
+  { mesh: "eng_strip_l", name: "Engine side strip (left)", system: "ENGINE", c: [0.42, 0.77, -1.67], d: 1.7, source: "Object_60", rule: at([0.42, 0.77, -1.67]) },
+  { mesh: "eng_strip_r", name: "Engine side strip (right)", system: "ENGINE", c: [-0.34, 0.77, -1.65], d: 1.7, source: "Object_60", rule: at([-0.34, 0.77, -1.65]) },
+  { mesh: "eng_rear_bar", name: "Rear engine cross bar", system: "ENGINE", c: [0.03, 0.82, -1.92], d: 1.6, source: "Object_60", rule: at([0.03, 0.82, -1.92]) },
+  { mesh: "eng_rear_pieces", name: "Rear engine pieces", system: "ENGINE", c: [0.04, 0.78, -1.86], d: 1.45, source: "Object_60", rule: box([-0.1, 0.7, -2.05], [0.2, 0.9, -1.75]) },
+  { mesh: "eng_bank_l", name: "Engine bank cover (left)", system: "ENGINE", c: [0.24, 0.79, -1.34], d: 1.3, source: "Object_60", rule: at([0.24, 0.79, -1.34]) },
+  { mesh: "eng_bank_r", name: "Engine bank cover (right)", system: "ENGINE", c: [-0.14, 0.79, -1.33], d: 1.3, source: "Object_60", rule: at([-0.14, 0.79, -1.33]) },
+  { mesh: "eng_valley", name: "Engine centre piece", system: "ENGINE", c: [0.03, 0.74, -1.42], d: 1.1, source: "Object_60", rule: at([0.03, 0.74, -1.42]) },
+  { mesh: "Object_60_rest", name: "Small engine piece", system: "ENGINE", c: [0.04, 0.87, -1.5], d: 2.8 },
 ];
 
 /** Island split rules per source mesh. */
