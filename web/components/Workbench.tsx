@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ModelControls, useModelState } from "@/components/ModelControls";
 import { PartInspector } from "@/components/PartInspector";
 import { buildFixture, FIXTURE_BINDINGS, FIXTURE_GROUPS } from "@/lib/fixture";
+import { buildEngineConcept, ENGINE_BINDINGS, ENGINE_GROUPS, ENGINE_SYSTEMS } from "@/lib/engineDemo";
 import { DEMO458_BINDINGS, DEMO458_GROUPS, DEMO458_SYSTEMS, DEMO458_URL, tuneDemo458 } from "@/lib/demo458";
 import { selectionForMesh, type Selection } from "@/lib/explode";
 import type { MeshStats, ModelSource } from "./Viewer3D";
@@ -28,6 +29,14 @@ const PRESETS = {
     label: "Community 3D model of a Ferrari 458 Italia. Drag to rotate, scroll to zoom; use the list for keyboard selection.",
     note: "Exterior and interior components are the model’s own separate geometry pieces, named by where they sit in the car. Order, steps of 10 and offsets are a demo — no OEM numbers, quantities or fitment.",
     inspectNote: "Identified by its position in this community model; not a Ferrari part name or number.",
+  },
+  engineConcept: {
+    source: { type: "scene", build: buildEngineConcept } as ModelSource, bindings: ENGINE_BINDINGS, groups: ENGINE_GROUPS,
+    systems: ENGINE_SYSTEMS,
+    tag: "Procedural V8 concept · illustrative geometry · not OEM data", listTitle: "Concept components",
+    label: "Illustrative procedural V8 engine assembly. Drag to rotate, scroll to zoom, and select components to inspect the concept model.",
+    note: "Generated from Three.js primitives for interaction design. Component names are generic; geometry, arrangement, disassembly order, and offsets are illustrative—not Ferrari or Lamborghini specifications, fitment, or factory data.",
+    inspectNote: "Procedural concept component; not a manufacturer part number, specification, or fitment record.",
   },
 } as const;
 

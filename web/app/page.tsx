@@ -29,6 +29,7 @@ export default async function Home() {
             <Link className="btn primary" href={`/vehicles/${v.slug}`}>Open the explorer</Link>
             <Link className="btn" href="/catalog">Search {v.counts.assemblies} assembly groups</Link>
             <Link className="btn" href="/demo/ferrari-458">3D demo</Link>
+            <Link className="btn" href="/demo/engine">V8 engine concept</Link>
             <Link className="btn" href="/store">All parts</Link>
           </div>
           <div className="hero-meta">
@@ -69,6 +70,15 @@ export default async function Home() {
               <h3>Centenario</h3>
               <p className="muted">Community 3D model (CC BY 4.0) — not OEM data.</p>
               <span className="vcard-cta">Open 3D demo <span aria-hidden="true">→</span></span>
+            </div>
+          </Link>
+          <Link href="/demo/engine" className="card vcard live">
+            <div className="vcard-stage"><span className="vcard-planned">Procedural 3D</span></div>
+            <div className="vcard-body">
+              <div className="vcard-top"><span className="eyebrow">Engine study</span><span className="pill unverified">Concept model</span></div>
+              <h3>V8 assembly</h3>
+              <p className="muted">Interactive generic engine concept with selectable components and step-by-step disassembly.</p>
+              <span className="vcard-cta">Open engine study <span aria-hidden="true">→</span></span>
             </div>
           </Link>
           {["Maserati"].map((make) => (
