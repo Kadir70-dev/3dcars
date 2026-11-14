@@ -64,31 +64,32 @@ export default function Explorer({ vehicle, assemblies, initialCode }: Props) {
 
   return (
     <>
-      <div className="explorer">
-        <section className={`card viewer${model ? "" : " car-stage"}`} aria-labelledby="viewer-h">
-          <h2 id="viewer-h" className="sr-only">Vehicle view</h2>
-          {model && source ? (
-            <>
-              <div className="viewer-tag">
-                <span className="pill verified">Licensed 3D · {model.licensor}</span>
-                {!model.isRealVehicleGeometry && <span className="pill unverified">Stylised — not exact vehicle geometry</span>}
-              </div>
-              <Viewer3D source={source} bindings={bindings} label={`3D model of the ${vehicle.make} ${vehicle.model}. Drag to rotate, scroll to zoom; use the lists for keyboard selection.`}
-                highlighted={m.highlighted} exploded={m.exploded} hidden={m.hidden} isolate={m.isolate}
-                focusNonce={m.focusNonce} resetNonce={m.resetNonce} onPickMesh={pickMesh} />
-              <ModelControls m={m} selectionLabel={selectionLabel} />
-            </>
-          ) : (
-            <CarSwitcher />
-          )}
-          {!model && <div className="viewer-foot">
-            <div className="systems" aria-label="Jump to a group">
-              {SCHEMATIC_REGIONS.map((r) => (
-                <button key={r.code} type="button" className="chip" aria-pressed={code === r.code} onClick={() => setCode(r.code)}>{r.label}</button>
-              ))}
+      {!model && (
+        // Full-screen 3D stage: just the cars, tabs on top, Assemble / Disassemble at the bottom.
+        <section className="explorer-stage" aria-label="3D cars"><CarSwitcher /></section>
+      )}
+      <div className="wrap explorer-below">
+      {!model && (
+        <div className="systems explorer-chips" aria-label="Jump to a group">
+          {SCHEMATIC_REGIONS.map((r) => (
+            <button key={r.code} type="button" className="chip" aria-pressed={code === r.code} onClick={() => setCode(r.code)}>{r.label}</button>
+          ))}
+        </div>
+      )}
+      <div className={model ? "explorer" : "explorer explorer-solo"}>
+        {model && source && (
+          <section className="card viewer" aria-labelledby="viewer-h">
+            <h2 id="viewer-h" className="sr-only">Vehicle view</h2>
+            <div className="viewer-tag">
+              <span className="pill verified">Licensed 3D · {model.licensor}</span>
+              {!model.isRealVehicleGeometry && <span className="pill unverified">Stylised — not exact vehicle geometry</span>}
             </div>
-          </div>}
-        </section>
+            <Viewer3D source={source} bindings={bindings} label={`3D model of the ${vehicle.make} ${vehicle.model}. Drag to rotate, scroll to zoom; use the lists for keyboard selection.`}
+              highlighted={m.highlighted} exploded={m.exploded} hidden={m.hidden} isolate={m.isolate}
+              focusNonce={m.focusNonce} resetNonce={m.resetNonce} onPickMesh={pickMesh} />
+            <ModelControls m={m} selectionLabel={selectionLabel} />
+          </section>
+        )}
 
         <DetailPanel slug={vehicle.slug} assembly={selected} detail={detail?.code === code ? detail : null} error={loadError}
           boundParts={boundParts} selectedPartId={sel.partId} onSelectPart={(id) => code && setSel({ code, partId: id })} />
@@ -122,6 +123,7 @@ export default function Explorer({ vehicle, assemblies, initialCode }: Props) {
           {visible.length === 0 && <div className="empty">No groups match. Try a broader term such as “brake” or “door”.</div>}
         </div>
       </section>
+      </div>
     </>
   );
 }

@@ -514,3 +514,15 @@ body { background: radial-gradient(1100px 520px at 85% -8%, #ffe3dc 0%, transpar
 .car-embed-actions button[aria-pressed="true"] { background: var(--red); border-color: var(--red); color: #fff; }
 .explorer .viewer.car-stage { background: radial-gradient(70% 60% at 50% 60%, #ffffff, #fdf2ef 75%); padding-top: 14px; }
 .split-stage { padding: 14px 10px 0; background: radial-gradient(70% 60% at 50% 60%, #ffffff, #fdf2ef 75%); }
+
+/* Explorer: full-screen 3D stage, no frame; everything else sits below it. */
+.explorer-stage { position: relative; height: calc(100svh - 99px); min-height: 460px; background: radial-gradient(70% 55% at 50% 58%, #ffffff 0%, transparent 70%); }
+.explorer-stage .car-switcher { position: absolute; inset: 0; display: block; }
+.explorer-stage .car-tabs { position: absolute; top: 18px; left: 50%; transform: translateX(-50%); z-index: 6; }
+.explorer-stage [role="tabpanel"], .explorer-stage .car-embed { position: absolute; inset: 0; height: auto; }
+.explorer-stage .car-embed-actions { bottom: 26px; }
+.explorer-below { padding-top: 28px; }
+.explorer-chips { justify-content: center; margin-bottom: 24px; }
+.explorer.explorer-solo { grid-template-columns: 1fr; }
+@media (max-width: 1000px) { .explorer-stage { height: calc(100svh - 141px); } }
+@media (max-width: 720px) { .car-tab { padding: 8px 12px; white-space: nowrap; } .car-tab span { font-size: 10px; } }
