@@ -1,30 +1,22 @@
 import Link from "next/link";
-import dynamicImport from "next/dynamic";
-import { api, formatDate, VEHICLE, type StoreResponse, type VehicleDetail } from "@/lib/api";
-import { DEMO458_ATTRIBUTION, DEMO458_BINDINGS } from "@/lib/demo458";
+import { api, formatDate, VEHICLE, type Assembly, type StoreResponse, type VehicleDetail } from "@/lib/api";
+import { DEMO458_BINDINGS } from "@/lib/demo458";
 import { LAMBO_PART_COUNT } from "@/lib/demoLambo";
-import LazyMount from "@/components/LazyMount";
-import CarSwitcher from "@/components/CarSwitcher";
+import Explorer from "@/components/Explorer";
 import { StatusPill } from "@/components/Status";
 import { ApiDown } from "@/components/ApiDown";
-import type { Caption } from "@/components/ScrollCar";
-
-const ScrollCar = dynamicImport(() => import("@/components/ScrollCar"));
 
 // Rendered per request: Next 16.4 ISR regeneration referenced a CSS chunk missing from the build.
 export const dynamic = "force-dynamic";
 
-const CAPTIONS: Caption[] = [
-  { from: 0, to: 0.2, eyebrow: "360° view", title: "Turn it all the way round.", body: "Scroll to spin a real 3D car through a full circle." },
-  { from: 0.2, to: 0.48, eyebrow: "Every angle", title: "Look closer, from any side.", body: "Bodywork, lamps, glass and wheels — exactly where they sit." },
-  { from: 0.48, to: 0.8, eyebrow: "Disassembly", title: "Then take it apart.", body: `${DEMO458_BINDINGS.length} pieces lift away in order: trim, lamps, glass, panels, wheels and cabin.` },
-  { from: 0.8, to: 1.01, eyebrow: "Find the part", title: "From the model to the part you need.", body: "Search genuine parts listed by Autovivo and send one enquiry." },
-];
 
 export default async function Home() {
-  let v: VehicleDetail, store: StoreResponse;
+  let v: VehicleDetail, store: StoreResponse, list: Assembly[];
   try {
-    [v, store] = await Promise.all([api<VehicleDetail>(`/vehicles/${VEHICLE}`), api<StoreResponse>("/store-parts")]);
+    [v, store, { assemblies: list }] = await Promise.all([
+      api<VehicleDetail>(`/vehicles/${VEHICLE}`), api<StoreResponse>("/store-parts"),
+      api<{ assemblies: Assembly[] }>(`/vehicles/${VEHICLE}/assemblies`),
+    ]);
   } catch {
     return <ApiDown />;
   }
@@ -39,18 +31,9 @@ export default async function Home() {
 
   return (
     <>
-      <section className="wrap hero-apple">
-        <div className="eyebrow">Autovivo · Italian luxury car parts</div>
-        <h1>Every part.<br /><em>Every angle.</em></h1>
-        <p className="lead">Genuine Ferrari, Lamborghini and Maserati parts from Autovivo — browse them, see where they sit in 3D, and send one enquiry.</p>
-        <div className="hero-actions">
-          <Link className="btn primary" href="/store">Browse {total} parts</Link>
-          <Link className="btn" href="/demo/lamborghini">Take a car apart</Link>
-        </div>
-        <p className="hero-note">Prices on request · fitment confirmed against your VIN</p>
-      </section>
-
-      <ScrollCar captions={CAPTIONS} credit={<>3D model: “{DEMO458_ATTRIBUTION.title}” by {DEMO458_ATTRIBUTION.author}, {DEMO458_ATTRIBUTION.license} — a community model, not OEM data. <Link href="/sources">Credits</Link></>} />
+      {/* Hero: the full-screen 3D explorer (Ferrari / Lamborghini / Maserati), group details below. */}
+      <h1 className="sr-only">Autovivo — genuine Ferrari, Lamborghini and Maserati parts, explored in 3D</h1>
+      <Explorer vehicle={v} assemblies={list} initialCode="0001" />
 
       <section className="wrap section reveal" aria-labelledby="marques-h">
         <div className="section-head centered">
@@ -79,21 +62,6 @@ export default async function Home() {
           <div><b>{DEMO458_BINDINGS.length}</b><span>pieces in the Ferrari 3D demo</span></div>
           <div><b>{LAMBO_PART_COUNT}</b><span>pieces in the Lamborghini 3D demo</span></div>
           <div><b>1</b><span>enquiry for everything you need</span></div>
-        </div>
-      </section>
-
-      <section className="wrap section reveal" aria-labelledby="explorer-h">
-        <div className="split">
-          <div>
-            <div className="eyebrow">Ferrari · Lamborghini · Maserati</div>
-            <h2 id="explorer-h">Find parts <em>by system.</em></h2>
-            <p className="muted">Browse the 488 GTB by its {v.counts.assemblies} assembly groups, with {v.counts.parts} Autovivo-listed parts and the source of every record.</p>
-            <div className="hero-actions">
-              <Link className="btn primary" href={`/vehicles/${v.slug}`}>Open the explorer</Link>
-              <Link className="btn" href="/catalog">Search groups</Link>
-            </div>
-          </div>
-          <div className="card split-stage"><LazyMount minHeight={460}><CarSwitcher /></LazyMount></div>
         </div>
       </section>
 
