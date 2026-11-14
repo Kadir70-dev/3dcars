@@ -19,3 +19,5 @@ These prompts document the three original AI-generated reference images used on 
 - The pictures are visual concept references only. Image generation can introduce inconsistencies between views and is not photogrammetry.
 - The GLB download and interactive viewer use separately authored procedural geometry. They are not measured from these pictures and are not official OEM CAD.
 - Do not use the visuals to identify exact part numbers, model-year fitment, specifications, or repair procedures.
+- The turntable prompt asked for eight panels in one strip; the generated `turntable.webp` actually shows twelve views in two rows of six, and details can differ between panels.
+- The hero render echoes recognisable Maserati styling cues (oval vertical-slat grille, three side vents). It is labelled "Maserati-inspired" and every image carries an "AI concept art · not OEM" badge, but have the name, the badge-like grille emblem and the styling reviewed for trademark and trade dress before any public use.

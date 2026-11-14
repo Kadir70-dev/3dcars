@@ -379,8 +379,11 @@ dialog::backdrop { background: #000a; backdrop-filter: blur(3px); }
 .concept-gallery .section-head { margin-bottom: 22px; }
 .concept-gallery .section-head h2 { margin-top: 10px; }
 .concept-gallery-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
-.concept-visual-card { margin: 0; overflow: hidden; border: 1px solid var(--line); border-radius: 10px; background: var(--bg-2); }
+.concept-visual-card { position: relative; margin: 0; overflow: hidden; border: 1px solid var(--line); border-radius: 10px; background: var(--bg-2); }
 .concept-visual-card:first-child { grid-column: 1 / -1; }
+/* Disclaimer drawn over each image so it survives a crop or screenshot of the picture. */
+.concept-badge { position: absolute; left: 10px; top: 10px; z-index: 1; padding: 4px 9px; border-radius: 999px; background: #0b0c0dd9;
+  border: 1px solid #e8b04b88; color: var(--amber); font: 600 10px var(--mono); letter-spacing: .08em; text-transform: uppercase; pointer-events: none; }
 .concept-visual-card img { display: block; width: 100%; height: auto; background: #101214; }
 .concept-visual-card figcaption { display: flex; justify-content: space-between; gap: 16px; padding: 13px 16px; font-size: 12px; }
 .concept-visual-card figcaption strong { color: var(--text); font: 600 10px var(--mono); letter-spacing: .1em; text-transform: uppercase; }
@@ -390,6 +393,7 @@ dialog::backdrop { background: #000a; backdrop-filter: blur(3px); }
   .concept-gallery { padding-top: 56px; }
   .concept-gallery-grid { grid-template-columns: 1fr; }
   .concept-visual-card:first-child { grid-column: auto; }
+  .concept-badge { font-size: 9px; }
   .concept-visual-card figcaption { flex-direction: column; gap: 5px; }
 }
 

@@ -32,14 +32,17 @@ export default function Page() {
         </div>
         <div className="concept-gallery-grid">
           <figure className="concept-visual-card">
+            <span className="concept-badge">AI concept art · not OEM</span>
             <Image src="/images/maserati-concept/hero.webp" alt="Deep blue Italian GT coupe concept, front three-quarter studio view" width={1672} height={941} priority />
             <figcaption><strong>01 / Exterior</strong><span>Front three-quarter concept view</span></figcaption>
           </figure>
           <figure className="concept-visual-card">
+            <span className="concept-badge">AI concept art · not OEM</span>
             <Image src="/images/maserati-concept/turntable.webp" alt="Blue GT coupe concept shown from multiple angles in a studio turntable sheet" width={2172} height={724} />
             <figcaption><strong>02 / Turntable</strong><span>Multi-angle visual reference sheet</span></figcaption>
           </figure>
           <figure className="concept-visual-card">
+            <span className="concept-badge">AI concept art · not OEM</span>
             <Image src="/images/maserati-concept/exploded-parts.webp" alt="Illustrative exploded view of major GT coupe assemblies, including body, engine, chassis, suspension, wheels, and interior" width={1672} height={941} />
             <figcaption><strong>03 / Major assemblies</strong><span>Illustrative exploded parts overview</span></figcaption>
           </figure>
