@@ -1,0 +1,8 @@
+ferrari-458-community.glb
+  "Ferrari 458 Italia" by vicent091036
+  https://sketchfab.com/3d-models/ferrari-458-italia-57bf6cc56931426e87494f554df1dab6 (page unavailable when checked 2026-11-14)
+  Licence: CC BY 4.0 https://creativecommons.org/licenses/by/4.0/
+  Obtained from https://github.com/mrdoob/three.js/blob/dev/examples/models/gltf/ferrari.glb
+  (licence recorded in https://github.com/mrdoob/three.js/issues/23089)
+  File unmodified; materials are adjusted at runtime and demo groups/offsets are added by this project.
+  Demo only: a 458 Italia, not the 488 GTB; not OEM geometry or part data. Trademark review needed before any public use.

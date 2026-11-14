@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import FixtureViewer from "./FixtureViewer";
+import Workbench from "@/components/Workbench";
 
 export const metadata: Metadata = { title: "3D pipeline test fixture", robots: { index: false, follow: false } };
 
@@ -12,7 +12,7 @@ export default function Page() {
         <p>Abstract boxes and rings used to test rotate, zoom, selection and exploded view. <b>This is not a vehicle and not Ferrari geometry.</b>{" "}
           A licensed 488 GTB model plugs into the same viewer once approved.</p>
       </header>
-      <FixtureViewer />
+      <Workbench preset="fixture" />
     </div>
   );
 }

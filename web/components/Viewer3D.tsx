@@ -7,11 +7,15 @@ import { useEffect, useRef, useState } from "react";
 import * as THREE from "three";
 import { OrbitControls } from "three/addons/controls/OrbitControls.js";
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
+import { DRACOLoader } from "three/addons/loaders/DRACOLoader.js";
 import { RoomEnvironment } from "three/addons/environments/RoomEnvironment.js";
 import type { MeshBinding } from "@/lib/api";
 import { easeInOut, explodeTargets, missingMeshes, type Vec3 } from "@/lib/explode";
 
-export type ModelSource = { type: "url"; url: string } | { type: "scene"; build: () => THREE.Object3D };
+/** `tune` may adjust materials only (e.g. glass transparency); it must not move geometry. */
+export type ModelSource =
+  | { type: "url"; url: string; tune?: (root: THREE.Object3D) => void }
+  | { type: "scene"; build: () => THREE.Object3D };
 
 interface Props {
   source: ModelSource;
@@ -96,6 +100,8 @@ export default function Viewer3D(props: Props) {
 
     const mount = (root: THREE.Object3D) => {
       if (disposed) return;
+      if (source.type === "url") source.tune?.(root);
+      root.updateMatrixWorld(true);
       const bound = new Map<string, THREE.Object3D>();
       const all: string[] = [];
       root.traverse((o) => {
@@ -118,7 +124,7 @@ export default function Viewer3D(props: Props) {
       const center = box.getCenter(new THREE.Vector3());
       camera.near = size / 100;
       camera.far = size * 20;
-      camera.position.copy(center).add(new THREE.Vector3(size * 1.05, size * 0.5, size * 1.2));
+      camera.position.copy(center).add(new THREE.Vector3(size * 0.78, size * 0.38, size * 0.92));
       controls.target.copy(center);
       controls.minDistance = size * 0.2;
       controls.maxDistance = size * 3;
@@ -126,7 +132,7 @@ export default function Viewer3D(props: Props) {
       rt.current = {
         bound, meshes,
         base: new Map([...bound].map(([n, o]) => [n, o.position.clone()])),
-        targets: explodeTargets(bindings, [...bound.keys()]),
+        targets: toParentSpace(bound, explodeTargets(bindings, [...bound.keys()])),
         t: new Map([...bound.keys()].map((n) => [n, 0])),
         want: new Map([...bound.keys()].map((n) => [n, 0])),
         camera, controls, home: { pos: camera.position.clone(), target: center.clone() },
@@ -139,7 +145,10 @@ export default function Viewer3D(props: Props) {
     if (source.type === "scene") {
       mount(source.build());
     } else {
-      new GLTFLoader().load(source.url, (g) => mount(g.scene), undefined, () => !disposed && setState("error"));
+      // Draco decoder is served locally from /draco (copied from three/examples, Apache-2.0).
+      const draco = new DRACOLoader().setDecoderPath("/draco/");
+      new GLTFLoader().setDRACOLoader(draco).load(source.url, (g) => { draco.dispose(); mount(g.scene); }, undefined,
+        () => { draco.dispose(); if (!disposed) setState("error"); });
     }
 
     // Click (not drag) picks the bound ancestor of the nearest visible, non-ghosted hit.
@@ -240,7 +249,7 @@ export default function Viewer3D(props: Props) {
     for (const n of highlighted) { const o = r.bound.get(n); if (o?.visible) box.expandByObject(o); }
     if (box.isEmpty()) return;
     const center = box.getCenter(new THREE.Vector3());
-    const dist = THREE.MathUtils.clamp(box.getSize(new THREE.Vector3()).length() * 1.8, r.controls.minDistance, r.controls.maxDistance);
+    const dist = THREE.MathUtils.clamp(Math.max(box.getSize(new THREE.Vector3()).length() * 1.8, r.size * 0.45), r.controls.minDistance, r.controls.maxDistance);
     const dir = r.camera.position.clone().sub(r.controls.target).normalize();
     tweenTo(center.clone().add(dir.multiplyScalar(dist)), center);
     // eslint-disable-next-line react-hooks/exhaustive-deps -- runs only on explicit focus requests
@@ -274,6 +283,20 @@ export default function Viewer3D(props: Props) {
       )}
     </div>
   );
+}
+
+/** Explode offsets are recorded in model (world) space; convert to each node's parent space. */
+function toParentSpace(bound: Map<string, THREE.Object3D>, world: Map<string, Vec3>): Map<string, Vec3> {
+  const out = new Map<string, Vec3>();
+  for (const [name, o] of bound) {
+    const off = world.get(name) ?? [0, 0, 0];
+    if (!o.parent || (off[0] === 0 && off[1] === 0 && off[2] === 0)) { out.set(name, off); continue; }
+    const wp = o.getWorldPosition(new THREE.Vector3());
+    const a = o.parent.worldToLocal(wp.clone());
+    const b = o.parent.worldToLocal(wp.clone().add(new THREE.Vector3(...off)));
+    out.set(name, [b.x - a.x, b.y - a.y, b.z - a.z]);
+  }
+  return out;
 }
 
 function applyLook(r: Runtime, highlighted: Set<string>, hidden: Set<string>, isolate: boolean) {
