@@ -30,6 +30,7 @@ export default async function Home() {
             <Link className="btn" href="/catalog">Search {v.counts.assemblies} assembly groups</Link>
             <Link className="btn" href="/demo/ferrari-458">3D demo</Link>
             <Link className="btn" href="/demo/engine">V8 engine concept</Link>
+            <Link className="btn" href="/demo/maserati">Maserati 3D concept</Link>
             <Link className="btn" href="/store">All parts</Link>
           </div>
           <div className="hero-meta">
@@ -81,16 +82,15 @@ export default async function Home() {
               <span className="vcard-cta">Open engine study <span aria-hidden="true">→</span></span>
             </div>
           </Link>
-          {["Maserati"].map((make) => (
-            <div className="card vcard planned" key={make} aria-disabled="true">
-              <div className="vcard-stage"><span className="vcard-planned">Planned</span></div>
+          <Link href="/demo/maserati" className="card vcard live">
+              <div className="vcard-stage"><span className="vcard-planned">Procedural 3D</span></div>
               <div className="vcard-body">
-                <div className="vcard-top"><span className="eyebrow">{make}</span><span className="pill neutral">Not started</span></div>
-                <h3>Model to be chosen</h3>
-                <p className="muted">Begins after the Ferrari milestone is reviewed.</p>
+                <div className="vcard-top"><span className="eyebrow">Maserati-inspired</span><span className="pill unverified">Concept model</span></div>
+                <h3>GT coupe</h3>
+                <p className="muted">Original generated 3D concept with selectable components. Not an exact production Maserati or OEM data.</p>
+                <span className="vcard-cta">Open 3D concept <span aria-hidden="true">→</span></span>
               </div>
-            </div>
-          ))}
+          </Link>
         </div>
       </section>
 
