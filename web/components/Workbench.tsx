@@ -53,6 +53,9 @@ export default function Workbench({ preset }: { preset: keyof typeof PRESETS }) 
   }, []);
 
   const select = (s: Selection) => { setSel(s); if (clickIsolate && (s.partId !== null || s.code)) m.setIsolate(true); };
+  // A part chosen in the list is shown on its own and the camera zooms to it.
+  const solo = (s: Selection) => { setSel(s); m.setIsolate(true); m.focus(); };
+  const clearAll = () => { setSel(NONE); setSystem(null); m.setIsolate(false); m.home(); };
   const chooseSystem = (code: string | null) => {
     setSystem(code); setSel(NONE);
     if (clickIsolate) m.setIsolate(Boolean(code));
@@ -82,13 +85,13 @@ export default function Workbench({ preset }: { preset: keyof typeof PRESETS }) 
         <ModelControls m={m} selectionLabel={label} />
         <PartInspector m={m} note={inspectNote} stats={part ? stats[part.meshName] : undefined}
           target={part ? { name: part.name, meshName: part.meshName, systemName: systemName(part.system), step: part.step, order: part.id } : null}
-          onClear={() => { setSel(NONE); m.setIsolate(false); }} />
+          onClear={clearAll} />
       </section>
 
       <aside className="card part-list" aria-labelledby="fx-list-h">
         <div className="part-list-head">
           <h2 id="fx-list-h">{listTitle}</h2>
-          {(sel.code || system) && <button type="button" className="btn small" onClick={() => { setSel(NONE); setSystem(null); m.setIsolate(false); }}>Clear</button>}
+          {(sel.code || system) && <button type="button" className="btn small" onClick={clearAll}>Clear</button>}
         </div>
         {systems.length > 0 && (
           <div className="system-chips" role="group" aria-label="Filter by vehicle system">
@@ -127,7 +130,7 @@ export default function Workbench({ preset }: { preset: keyof typeof PRESETS }) 
                     return (
                       <li key={p.id}>
                         <button type="button" className={`pl-part${now ? " is-moving" : ""}${out ? " is-out" : ""}`} data-mesh={p.meshName}
-                          aria-current={on} onClick={() => select({ code: g.code, partId: p.id })}>
+                          aria-current={on} onClick={() => solo({ code: g.code, partId: p.id })}>
                           <span>{p.name}</span>
                           <span className="mono muted">{hidden ? "hidden" : now ? "coming out" : out ? "out" : ""}</span>
                         </button>

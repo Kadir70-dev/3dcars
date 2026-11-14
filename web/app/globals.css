@@ -361,3 +361,8 @@ dialog::backdrop { background: #000a; backdrop-filter: blur(3px); }
 .inspector-actions { display: flex; flex-wrap: wrap; gap: 8px; }
 .empty-inspector p { margin: 4px 0 0; font-size: 13px; }
 .missing-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 12px; }
+
+/* Workbench: no frame around the 3D view — just the car on the page. */
+.workbench .viewer.card { border: 0; background: none; border-radius: 0; }
+.workbench .viewer-canvas { background: none; border-radius: 0; }
+.workbench .model-controls, .workbench .inspector { border-top-color: transparent; padding-left: 0; padding-right: 0; }

@@ -49,6 +49,8 @@ export function useModelState(bindings: MeshBinding[], sel: Selection, override:
     steps, level, setLevel, movable, current, onlySelection, setOnlySelection, isolate, setIsolate,
     hidden, showAll: () => setHidden(new Set()), toggleHidden, selectionHidden,
     highlighted, exploded, focus: () => setFocusNonce((n) => n + 1), focusNonce, resetNonce, reset,
+    /** Camera back to the starting view, nothing else changes. */
+    home: () => setResetNonce((n) => n + 1),
   };
 }
 

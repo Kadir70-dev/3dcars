@@ -73,7 +73,6 @@ interface Runtime {
 
 const HIGHLIGHT = new THREE.Color("#d8b36b");
 const BLACK = new THREE.Color(0);
-const GHOST_OPACITY = 0.08;
 
 export default function Viewer3D(props: Props) {
   const { source, bindings, label, highlighted, exploded, hidden, isolate, onPickMesh, focusNonce, resetNonce } = props;
@@ -155,7 +154,7 @@ export default function Viewer3D(props: Props) {
       camera.far = size * 20;
       camera.position.copy(center).add(new THREE.Vector3(size * 0.78, size * 0.38, size * 0.92));
       controls.target.copy(center);
-      controls.minDistance = size * 0.2;
+      controls.minDistance = size * 0.04;
       controls.maxDistance = size * 3;
       camera.updateProjectionMatrix();
       const worldTargets = explodeTargets(bindings, [...bound.keys()]);
@@ -207,7 +206,7 @@ export default function Viewer3D(props: Props) {
       const byMesh = new Map(r.meshes.map((m) => [m.mesh, m]));
       for (const hit of ray.intersectObjects(scene.children, true)) {
         const info = byMesh.get(hit.object as THREE.Mesh);
-        if (!info || !isShown(info.mesh) || info.mats[0]?.mat.opacity <= GHOST_OPACITY) continue;
+        if (!info || !isShown(info.mesh)) continue;
         if (info.owner) pickRef.current(info.owner);
         return;
       }
@@ -226,7 +225,7 @@ export default function Viewer3D(props: Props) {
       r.hover = null;
       for (const hit of ray.intersectObjects(scene.children, true)) {
         const info = byMesh.get(hit.object as THREE.Mesh);
-        if (!info || !isShown(info.mesh) || info.mats[0]?.mat.opacity <= GHOST_OPACITY) continue;
+        if (!info || !isShown(info.mesh)) continue;
         r.hover = info.owner;
         break;
       }
@@ -340,7 +339,7 @@ export default function Viewer3D(props: Props) {
     for (const n of highlighted) { const o = r.bound.get(n); if (o?.visible) box.expandByObject(o); }
     if (box.isEmpty()) return;
     const center = box.getCenter(new THREE.Vector3());
-    const dist = THREE.MathUtils.clamp(Math.max(box.getSize(new THREE.Vector3()).length() * 1.8, r.size * 0.45), r.controls.minDistance, r.controls.maxDistance);
+    const dist = THREE.MathUtils.clamp(Math.max(box.getSize(new THREE.Vector3()).length() * 2.2, r.size * 0.12), r.controls.minDistance, r.controls.maxDistance);
     const dir = r.camera.position.clone().sub(r.controls.target).normalize();
     tweenTo(center.clone().add(dir.multiplyScalar(dist)), center);
     // eslint-disable-next-line react-hooks/exhaustive-deps -- runs only on explicit focus requests
@@ -392,17 +391,14 @@ function toParentSpace(bound: Map<string, THREE.Object3D>, world: Map<string, Ve
 
 function applyLook(r: Runtime, highlighted: Set<string>, hidden: Set<string>, isolate: boolean) {
   for (const [n, o] of r.bound) o.visible = !hidden.has(n);
-  const ghostOthers = isolate && highlighted.size > 0;
-  for (const { owner, mats } of r.meshes) {
+  // Isolate removes everything except the highlighted parts from view (they are not deleted).
+  const isolateOthers = isolate && highlighted.size > 0;
+  for (const { mesh, owner, mats } of r.meshes) {
     const lit = owner !== null && highlighted.has(owner);
-    const ghost = ghostOthers && !lit;
+    mesh.visible = !(isolateOthers && !lit);
     for (const s of mats) {
       const std = s.mat as THREE.MeshStandardMaterial;
-      if (std.emissive) { std.emissive.copy(lit ? HIGHLIGHT : BLACK); std.emissiveIntensity = lit ? 0.5 : 0; }
-      s.mat.transparent = ghost || s.transparent;
-      s.mat.opacity = ghost ? GHOST_OPACITY : s.opacity;
-      s.mat.depthWrite = ghost ? false : s.depthWrite;
-      s.mat.needsUpdate = true;
+      if (std.emissive) { std.emissive.copy(lit ? HIGHLIGHT : BLACK); std.emissiveIntensity = lit && !isolateOthers ? 0.5 : lit ? 0.12 : 0; }
     }
   }
 }
