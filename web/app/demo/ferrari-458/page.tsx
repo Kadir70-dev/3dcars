@@ -3,15 +3,15 @@ import FullscreenDemo from "@/components/FullscreenDemo";
 
 // Model credit (CC BY 4.0) is on the Sources page and in /models/demo/ATTRIBUTION.txt.
 export const metadata: Metadata = {
-  title: "3D demo — community Ferrari 458 model",
-  description: "Full-screen exploded-view demo using a community Ferrari 458 Italia model (CC BY 4.0). Not the 488 GTB and not OEM data.",
+  title: "Ferrari 458 Italia in 3D",
+  description: "Explore a Ferrari 458 Italia in 3D: rotate, zoom and take it apart piece by piece.",
   robots: { index: false, follow: false },
 };
 
 export default function Page() {
   return (
     <>
-      <h1 className="sr-only">3D demo — community Ferrari 458 model (not the 488 GTB, not OEM data)</h1>
+      <h1 className="sr-only">Ferrari 458 Italia in 3D</h1>
       <FullscreenDemo preset="ferrari458" />
     </>
   );

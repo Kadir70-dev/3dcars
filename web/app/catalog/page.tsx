@@ -5,6 +5,7 @@ import { api, VEHICLE, type Assembly, type PartSummary, type VehicleDetail } fro
 import { StatusPill } from "@/components/Status";
 import { AddPart } from "@/components/AddPart";
 import { ApiDown } from "@/components/ApiDown";
+import TiltGrid from "@/components/TiltGrid";
 
 export const metadata: Metadata = {
   title: "Catalog search — Ferrari 488 GTB",
@@ -72,13 +73,15 @@ export default async function Catalog({ searchParams }: SP) {
               : "No parts match these filters."}
           </div>
         ) : (
-          <div className="product-grid">
+          <TiltGrid className="product-grid elite-grid">
             {res.parts.map((p) => (
-              <article className="card product" key={`${p.id}-${p.assemblyCode}-${p.diagramRef}`}>
+              <article className="product elite" key={`${p.id}-${p.assemblyCode}-${p.diagramRef}`}>
                 <Link href={`/parts/${p.id}`} className="product-img" tabIndex={-1} aria-hidden="true">
-                  {p.imageUrl
-                    ? <Image src={p.imageUrl} alt="" fill sizes="(max-width: 720px) 100vw, 300px" />
-                    : <span className="muted">No photo</span>}
+                  <span className="product-float">
+                    {p.imageUrl
+                      ? <Image src={p.imageUrl} alt="" fill sizes="(max-width: 720px) 100vw, 300px" />
+                      : <span className="muted">No photo</span>}
+                  </span>
                 </Link>
                 <div className="product-body">
                   <div className="product-top">
@@ -94,7 +97,7 @@ export default async function Catalog({ searchParams }: SP) {
                 </div>
               </article>
             ))}
-          </div>
+          </TiltGrid>
         )}
       </section>
 

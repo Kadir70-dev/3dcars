@@ -1,6 +1,6 @@
 "use client";
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { shortlist, useShortlist } from "@/lib/shortlist";
 import { STATIC_DATA } from "@/lib/api";
 
@@ -16,6 +16,9 @@ export default function QuotePage() {
   const [done, setDone] = useState<{ id: number; note: string } | null>(null);
   const [failed, setFailed] = useState<string | null>(null);
   const [mailed, setMailed] = useState(false);
+
+  // "Confirm fitment with my VIN" links here: land straight in the VIN field.
+  useEffect(() => { if (window.location.hash === "#vin") document.getElementById("vin")?.focus(); }, []);
 
   function emailEnquiry(f: FormData) {
     const name = String(f.get("name") ?? "").trim();
@@ -93,7 +96,7 @@ export default function QuotePage() {
             <h2 id="form-h" style={{ fontSize: 26 }}>Your details</h2>
             <label>Name<input className="field" name="name" autoComplete="name" required aria-invalid={!!errors.name} />{errors.name && <span className="err">{errors.name}</span>}</label>
             <label>Email<input className="field" name="email" type="email" autoComplete="email" required aria-invalid={!!errors.email} />{errors.email && <span className="err">{errors.email}</span>}</label>
-            <label>VIN (optional, 17 characters)<input className="field mono" name="vin" maxLength={17} autoCapitalize="characters" spellCheck={false} aria-invalid={!!errors.vin} />{errors.vin && <span className="err">{errors.vin}</span>}</label>
+            <label>VIN (optional, 17 characters)<input className="field mono" id="vin" name="vin" maxLength={17} autoCapitalize="characters" spellCheck={false} aria-invalid={!!errors.vin} />{errors.vin && <span className="err">{errors.vin}</span>}</label>
             <label>Message (optional)<textarea className="field" name="message" maxLength={2000} /></label>
             {errors.items && <p className="err">{errors.items}</p>}
             {failed && <p className="err-box" role="alert">{failed}</p>}

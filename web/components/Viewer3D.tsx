@@ -51,6 +51,11 @@ interface Props {
   labelLines?: boolean;
   /** Allow orbiting all the way round, including from below, and spin slowly when idle. */
   spin360?: boolean;
+  /**
+   * For a viewer that fills the screen inside a scrolling page: the wheel scrolls the page (Ctrl/⌘ + wheel or a
+   * trackpad pinch zooms), and one finger swipes the page vertically instead of being captured by the canvas.
+   */
+  scrollSafe?: boolean;
 }
 
 export interface MeshStats { triangles: number; sourceMesh: string; islands: number | null }
@@ -97,6 +102,7 @@ export default function Viewer3D(props: Props) {
   const pickRef = useRef(onPickMesh);
   const [state, setState] = useState<"loading" | "ready" | "error">("loading");
   const [missing, setMissing] = useState<string[]>([]);
+  const [progress, setProgress] = useState<number | null>(null);
 
   useEffect(() => { pickRef.current = onPickMesh; movingRef.current = props.onMoving; nothingRef.current = props.onPickNothing; }, [onPickMesh, props.onMoving, props.onPickNothing]);
   useEffect(() => {
@@ -106,7 +112,7 @@ export default function Viewer3D(props: Props) {
   useEffect(() => {
     const el = host.current!;
     const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, powerPreference: "high-performance" });
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, window.matchMedia("(pointer: coarse)").matches ? 1.5 : 2));
     renderer.toneMapping = THREE.ACESFilmicToneMapping;
     renderer.outputColorSpace = THREE.SRGBColorSpace;
     el.appendChild(renderer.domElement);
@@ -123,6 +129,12 @@ export default function Viewer3D(props: Props) {
     const controls = new OrbitControls(camera, renderer.domElement);
     controls.enableDamping = true;
     controls.maxPolarAngle = props.spin360 ? Math.PI : Math.PI * 0.49;
+    // OrbitControls swallows every wheel event, which traps the page scroll whenever the pointer is over the canvas.
+    const wheelGate = (e: WheelEvent) => { if (!e.ctrlKey && !e.metaKey) e.stopPropagation(); };
+    if (props.scrollSafe) {
+      el.addEventListener("wheel", wheelGate, { capture: true });
+      renderer.domElement.style.touchAction = "pan-y";
+    }
     // Idle showcase spin: stops while the visitor drags, resumes a few seconds later.
     let resumeSpin = 0;
     if (props.spin360) {
@@ -179,6 +191,11 @@ export default function Viewer3D(props: Props) {
       const fit = camera.aspect < 1.2 ? 1.2 / camera.aspect : 1;
       camera.position.copy(center).add(new THREE.Vector3(size * 0.78, size * 0.38, size * 0.92).multiplyScalar(fit));
       controls.target.copy(center);
+      if (props.scrollSafe && window.matchMedia("(pointer: coarse)").matches) {
+        // Touch: spin left/right only, so a vertical swipe always scrolls the page and never tips the car over.
+        controls.update();
+        controls.minPolarAngle = controls.maxPolarAngle = controls.getPolarAngle();
+      }
       controls.minDistance = size * 0.04;
       controls.maxDistance = size * 3 * fit;
       camera.updateProjectionMatrix();
@@ -215,7 +232,8 @@ export default function Viewer3D(props: Props) {
     } else {
       // Draco decoder is served locally from /draco (copied from three/examples, Apache-2.0).
       const draco = new DRACOLoader().setDecoderPath("/draco/");
-      new GLTFLoader().setDRACOLoader(draco).load(source.url, (g) => { draco.dispose(); mount(g.scene); }, undefined,
+      new GLTFLoader().setDRACOLoader(draco).load(source.url, (g) => { draco.dispose(); mount(g.scene); },
+        (e) => { if (e.lengthComputable && !disposed) setProgress(Math.round((e.loaded / e.total) * 100)); },
         () => { draco.dispose(); if (!disposed) setState("error"); });
     }
 
@@ -305,6 +323,7 @@ export default function Viewer3D(props: Props) {
       cancelAnimationFrame(raf);
       ro.disconnect();
       controls.dispose();
+      el.removeEventListener("wheel", wheelGate, { capture: true });
       renderer.domElement.removeEventListener("pointerdown", onDown);
       renderer.domElement.removeEventListener("pointerup", onUp);
       renderer.domElement.removeEventListener("pointermove", onMove);
@@ -323,7 +342,7 @@ export default function Viewer3D(props: Props) {
       el.removeChild(renderer.domElement);
       rt.current = null;
     };
-  }, [source, bindings, props.labelLines, props.spin360]);
+  }, [source, bindings, props.labelLines, props.spin360, props.scrollSafe]);
 
   // Explode targets per mesh.
   useEffect(() => {
@@ -388,12 +407,12 @@ export default function Viewer3D(props: Props) {
 
   return (
     <div className="viewer-canvas" ref={host} role="region" aria-label={label}>
-      {!props.bare && <div className="viewer-toolbar">
+      {(!props.bare || props.scrollSafe) && <div className="viewer-toolbar">
         <button className="icon-btn" type="button" onClick={() => zoom(0.8)} aria-label="Zoom in">+</button>
         <button className="icon-btn" type="button" onClick={() => zoom(1.25)} aria-label="Zoom out">−</button>
         <button className="icon-btn" type="button" onClick={home} aria-label="Reset camera">⟲</button>
       </div>}
-      {state === "loading" && <p className="asset-gate" role="status">Loading model…</p>}
+      {state === "loading" && <p className="asset-gate" role="status">Loading 3D model{progress !== null ? ` ${progress}%` : "…"}</p>}
       {state === "error" && <p className="asset-gate" role="alert">The 3D model could not be loaded. Use the parts list instead.</p>}
       {state === "ready" && missing.length > 0 && (
         <p className="asset-gate" role="status">{missing.length} bound mesh name(s) not found in this model: {missing.slice(0, 4).join(", ")}</p>

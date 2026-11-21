@@ -6,7 +6,6 @@ import FullscreenDemo, { type DemoPreset } from "./FullscreenDemo";
 const CARS: { id: DemoPreset; make: string; model: string }[] = [
   { id: "ferrari458", make: "Ferrari", model: "458 Italia" },
   { id: "lamborghini", make: "Lamborghini", model: "Centenario" },
-  { id: "maserati", make: "Maserati", model: "GT concept" },
 ];
 
 export default function CarSwitcher({ initial = "ferrari458" }: { initial?: DemoPreset }) {

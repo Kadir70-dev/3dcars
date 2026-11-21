@@ -39,7 +39,7 @@ export interface PartSummary {
   id: number; oemPartNumber: string | null; name: string; quantity?: number | null; diagramRef?: string | null;
   assemblyCode?: string | null; assemblyName?: string | null;
   /** Client's store page and product photo, when the part comes from the client catalogue. */
-  listingUrl?: string | null; imageUrl?: string | null; provenance: Provenance;
+  listingUrl?: string | null; imageUrl?: string | null; images?: string[]; categories?: string[]; tags?: string[]; metaDescription?: string; provenance: Provenance;
 }
 export interface Spec { key: string; value: string; unit: string | null; provenance: Provenance }
 export interface Fitment {

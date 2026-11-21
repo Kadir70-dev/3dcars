@@ -1,7 +1,7 @@
 "use client";
 import dynamic from "next/dynamic";
 import Link from "next/link";
-import { useCallback, useDeferredValue, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useDeferredValue, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { api, type Assembly, type AssemblyDetail, type VehicleDetail } from "@/lib/api";
 import { shortlist, useShortlist } from "@/lib/shortlist";
 import { SCHEMATIC_REGIONS } from "./Schematic";
@@ -12,10 +12,14 @@ import { selectionForMesh, type Selection } from "@/lib/explode";
 
 const Viewer3D = dynamic(() => import("./Viewer3D"), { ssr: false, loading: () => <div className="viewer-canvas" /> });
 
-interface Props { vehicle: VehicleDetail; assemblies: Assembly[]; initialCode: string | null }
+interface Props { vehicle: VehicleDetail; assemblies: Assembly[]; initialCode: string | null; hero?: ReactNode }
 
-export default function Explorer({ vehicle, assemblies, initialCode }: Props) {
+/** Groups shown before "Show all", so the page does not open on a wall of 95 tiles. */
+const GROUP_PREVIEW = 16;
+
+export default function Explorer({ vehicle, assemblies, initialCode, hero }: Props) {
   const [query, setQuery] = useState("");
+  const [showAll, setShowAll] = useState(false);
   const [system, setSystem] = useState("");
   const [sel, setSel] = useState<Selection>({ code: initialCode ?? "0001", partId: null });
   const code = sel.code;
@@ -40,6 +44,8 @@ export default function Explorer({ vehicle, assemblies, initialCode }: Props) {
     [assemblies, system, q],
   );
   const selected = assemblies.find((a) => a.code === code) ?? null;
+  const filtering = Boolean(q || system);
+  const shown = filtering || showAll ? visible : visible.slice(0, Math.max(GROUP_PREVIEW, visible.findIndex((a) => a.code === code) + 1));
 
   useEffect(() => {
     if (!code) return;
@@ -66,7 +72,7 @@ export default function Explorer({ vehicle, assemblies, initialCode }: Props) {
     <>
       {!model && (
         // Full-screen 3D stage: just the cars, tabs on top, Assemble / Disassemble at the bottom.
-        <section className="explorer-stage" aria-label="3D cars"><CarSwitcher /></section>
+        <section className="explorer-stage" aria-label="3D cars">{hero}<CarSwitcher /></section>
       )}
       <div className="wrap explorer-below">
       {!model && (
@@ -111,9 +117,9 @@ export default function Explorer({ vehicle, assemblies, initialCode }: Props) {
           </select>
           {(query || system) && <button type="button" className="btn" onClick={() => { setQuery(""); setSystem(""); }}>Clear</button>}
         </div>
-        <p className="result-count" aria-live="polite">{visible.length} of {assemblies.length} assembly groups</p>
+        <p className="result-count" aria-live="polite">{filtering || showAll || shown.length >= visible.length ? `${visible.length} of ${assemblies.length} assembly groups` : `Showing ${shown.length} of ${assemblies.length} assembly groups`}</p>
         <div className="groups" ref={groupsRef}>
-          {visible.map((a) => (
+          {shown.map((a) => (
             <button key={a.code} type="button" className="group" aria-pressed={a.code === code}
               onClick={() => { setCode(a.code); if (window.innerWidth < 1000) document.getElementById("detail")?.scrollIntoView({ behavior: "smooth" }); }}>
               <span className="gcode">{a.code}</span>
@@ -122,6 +128,14 @@ export default function Explorer({ vehicle, assemblies, initialCode }: Props) {
           ))}
           {visible.length === 0 && <div className="empty">No groups match. Try a broader term such as “brake” or “door”.</div>}
         </div>
+        {shown.length < visible.length && (
+          <div className="groups-more">
+            <button type="button" className="btn" onClick={() => setShowAll(true)}>Show all {visible.length} groups</button>
+          </div>
+        )}
+        {showAll && !filtering && visible.length > GROUP_PREVIEW && (
+          <div className="groups-more"><button type="button" className="btn small" onClick={() => setShowAll(false)}>Show fewer</button></div>
+        )}
       </section>
       </div>
     </>
@@ -187,6 +201,7 @@ function DetailPanel({ slug, assembly, detail, error, boundParts, selectedPartId
           {inList ? "✓ In enquiry list — remove" : "Enquire about this group"}
         </button>
         <Link className="btn" href={`/catalog?assembly=${assembly.code}`}>Search within this group</Link>
+        <Link className="btn" href="/quote#vin" onClick={() => shortlist.add({ kind: "assembly", ref: assembly.code, label: `${assembly.code} · ${assembly.name}` })}>Confirm fitment with my VIN</Link>
       </div>
       <p className="help" style={{ marginTop: 12 }}>Vehicle: {slug} · Fitment must be confirmed against your VIN before ordering.</p>
     </aside>

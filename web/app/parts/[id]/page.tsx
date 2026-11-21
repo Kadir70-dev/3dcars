@@ -6,6 +6,7 @@ import { api, ApiError, type PartDetail } from "@/lib/api";
 import { Known, ProvenanceNote, StatusPill } from "@/components/Status";
 import { AddPart } from "@/components/AddPart";
 import { ApiDown } from "@/components/ApiDown";
+import PartGallery from "@/components/PartGallery";
 
 type P = { params: Promise<{ id: string }> };
 
@@ -21,7 +22,14 @@ async function load(id: string) {
 
 export async function generateMetadata({ params }: P): Promise<Metadata> {
   const p = await load((await params).id);
-  return p ? { title: `${p.name}${p.oemPartNumber ? ` (${p.oemPartNumber})` : ""}`, alternates: { canonical: `/parts/${p.id}` } } : {};
+  if (!p) return {};
+  const title = `${p.name}${p.oemPartNumber ? ` (${p.oemPartNumber})` : ""}`;
+  const description = p.metaDescription || p.description || `${p.name} — genuine part from Autovivo Spare Parts LLC. Price on request.`;
+  return {
+    title, description, alternates: { canonical: `/parts/${p.id}` },
+    keywords: p.tags,
+    openGraph: { title, description, type: "website", ...(p.imageUrl ? { images: [{ url: p.imageUrl, alt: p.name }] } : {}) },
+  };
 }
 
 export default async function PartPage({ params }: P) {
@@ -82,11 +90,8 @@ export default async function PartPage({ params }: P) {
           </section>
         </div>
         <aside className="card detail">
-          {p.imageUrl && (
-            <div className="product-img detail-img">
-              <Image src={p.imageUrl} alt={`${p.name} — photo from the Autovivo store`} fill sizes="(max-width: 1000px) 100vw, 420px" priority />
-            </div>
-          )}
+          {p.imageUrl && <PartGallery images={p.images?.length ? p.images : [p.imageUrl]} name={p.name} />}
+          {p.categories && p.categories.length > 0 && <p className="muted">{p.categories.join(" · ")}</p>}
           <div className="kv" style={{ marginTop: 0 }}>
             <div><small>Revision</small><Known value={p.revision} missing="Not recorded" /></div>
             <div><small>Price</small><Known value={null} missing="On request" /></div>

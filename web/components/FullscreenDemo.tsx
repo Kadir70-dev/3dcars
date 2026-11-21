@@ -7,7 +7,6 @@ import { useCallback, useMemo, useState } from "react";
 import { useModelState } from "@/components/ModelControls";
 import { DEMO458_BINDINGS, DEMO458_GROUPS, DEMO458_URL, tuneDemo458 } from "@/lib/demo458";
 import { LAMBO_BINDINGS, LAMBO_GROUPS, LAMBO_URL, tuneLambo } from "@/lib/demoLambo";
-import { buildMaseratiConcept, MASERATI_BINDINGS, MASERATI_GROUPS } from "@/lib/maseratiConcept";
 import { selectionForMesh, type Selection } from "@/lib/explode";
 import type { ModelSource } from "./Viewer3D";
 
@@ -16,15 +15,11 @@ const Viewer3D = dynamic(() => import("@/components/Viewer3D"), { ssr: false, lo
 const PRESETS = {
   ferrari458: {
     source: { type: "url", url: DEMO458_URL, tune: tuneDemo458 } as ModelSource, bindings: DEMO458_BINDINGS, groups: DEMO458_GROUPS,
-    label: "Community 3D model of a Ferrari 458 Italia (not the 488 GTB, not OEM data).",
+    label: "Interactive 3D model of a Ferrari 458 Italia. Drag to rotate, scroll to zoom.",
   },
   lamborghini: {
     source: { type: "url", url: LAMBO_URL, tune: tuneLambo } as ModelSource, bindings: LAMBO_BINDINGS, groups: LAMBO_GROUPS,
-    label: "Community 3D model of a Lamborghini Centenario (not OEM data).",
-  },
-  maserati: {
-    source: { type: "scene", build: buildMaseratiConcept } as ModelSource, bindings: MASERATI_BINDINGS, groups: MASERATI_GROUPS,
-    label: "Generated Maserati-inspired concept model (not OEM data).",
+    label: "Interactive 3D model of a Lamborghini Centenario. Drag to rotate, scroll to zoom.",
   },
 } as const;
 
@@ -48,10 +43,17 @@ export default function FullscreenDemo({ preset, embedded = false }: { preset: D
 
   const onMoving = useCallback((name: string) => setRecent((r) => [...r.slice(1 - RECENT_LABELS), name]), []);
   const clear = () => { setSel(NONE); m.setIsolate(false); m.home(); };
+  const [touched, setTouched] = useState(false);
 
   return (
-    <div className={embedded ? "car-embed" : "fs-demo"}>
-      <Viewer3D source={source} bindings={bindings} bare spin360 labelLines={false} staggerMs={90}
+    <div className={embedded ? "car-embed" : "fs-demo"} onPointerDown={() => setTouched(true)}>
+      {embedded && (
+        <p className={touched ? "stage-hint is-done" : "stage-hint"} aria-hidden="true">
+          <span className="hint-fine">Drag to rotate · Ctrl + scroll to zoom · Click a part to inspect it</span>
+          <span className="hint-coarse">Swipe to rotate · Pinch to zoom · Tap a part to inspect it</span>
+        </p>
+      )}
+      <Viewer3D source={source} bindings={bindings} bare spin360 labelLines={false} staggerMs={90} scrollSafe={embedded}
         label={`${label} Drag to rotate, scroll or pinch to zoom, click a part to inspect it.`}
         highlighted={m.highlighted} exploded={m.exploded} hidden={m.hidden} isolate={m.isolate}
         focusNonce={m.focusNonce} resetNonce={m.resetNonce}

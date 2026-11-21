@@ -92,11 +92,11 @@ export default async function Store({ searchParams }: SP) {
                   <span className="mono">{p.oemPartNumber ?? "No part no."}</span>
                   <StatusPill status={p.provenance.verificationStatus} />
                 </div>
-                <h3><Link href={`/parts/${p.id}`}>{p.name}</Link></h3>
+                <h3><Link href={`/parts/${p.id}`} title={p.name}>{p.name}</Link></h3>
                 <p className="muted">{p.brand}{p.fitModels.length ? ` · fits ${p.fitModels.slice(0, 3).join(", ")}${p.fitModels.length > 3 ? "…" : ""}` : ""}</p>
                 <div className="product-actions">
                   <AddPart compact id={p.id} label={`${p.oemPartNumber ?? "No part no."} · ${p.name}`} />
-                  {p.listingUrl && <a className="store-link" href={p.listingUrl} target="_blank" rel="noreferrer" aria-label={`View ${p.name} in the Autovivo store`}>Store ↗</a>}
+                  {p.listingUrl && <a className="store-link" href={p.listingUrl} target="_blank" rel="noreferrer" aria-label={`View ${p.name} on autovivo.it (opens in a new tab)`}>On autovivo.it ↗</a>}
                 </div>
               </div>
             </article>
