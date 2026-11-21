@@ -12,12 +12,12 @@ import { selectionForMesh, type Selection } from "@/lib/explode";
 
 const Viewer3D = dynamic(() => import("./Viewer3D"), { ssr: false, loading: () => <div className="viewer-canvas" /> });
 
-interface Props { vehicle: VehicleDetail; assemblies: Assembly[]; initialCode: string | null; hero?: ReactNode }
+interface Props { vehicle: VehicleDetail; assemblies: Assembly[]; initialCode: string | null; hero?: ReactNode; /** A real-photo stage; replaces the 3D car switcher when given. */ stage?: ReactNode }
 
 /** Groups shown before "Show all", so the page does not open on a wall of 95 tiles. */
 const GROUP_PREVIEW = 16;
 
-export default function Explorer({ vehicle, assemblies, initialCode, hero }: Props) {
+export default function Explorer({ vehicle, assemblies, initialCode, hero, stage }: Props) {
   const [query, setQuery] = useState("");
   const [showAll, setShowAll] = useState(false);
   const [system, setSystem] = useState("");
@@ -72,7 +72,7 @@ export default function Explorer({ vehicle, assemblies, initialCode, hero }: Pro
     <>
       {!model && (
         // Full-screen 3D stage: just the cars, tabs on top, Assemble / Disassemble at the bottom.
-        <section className="explorer-stage" aria-label="3D cars">{hero}<CarSwitcher /></section>
+        <section className={stage ? "explorer-stage photo-stage" : "explorer-stage"} aria-label={stage ? "Ferrari parts finder" : "3D cars"}>{hero}{stage ?? <CarSwitcher />}</section>
       )}
       <div className="wrap explorer-below">
       {!model && (

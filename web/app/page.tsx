@@ -1,10 +1,10 @@
 import Link from "next/link";
 import { api, formatDate, VEHICLE, type Assembly, type StoreResponse, type VehicleDetail } from "@/lib/api";
-import { DEMO458_BINDINGS } from "@/lib/demo458";
-import { LAMBO_PART_COUNT } from "@/lib/demoLambo";
 import Explorer from "@/components/Explorer";
 import { StatusPill } from "@/components/Status";
 import { ApiDown } from "@/components/ApiDown";
+import PhotoStage from "@/components/PhotoStage";
+import { loadHotspots } from "@/lib/hotspots";
 import TiltGrid from "@/components/TiltGrid";
 
 // Rendered per request: Next 16.4 ISR regeneration referenced a CSS chunk missing from the build.
@@ -21,23 +21,24 @@ export default async function Home() {
   } catch {
     return <ApiDown />;
   }
+  const spots = await loadHotspots("Ferrari");
   const brands = store.result.brands;
   const total = Object.values(brands).reduce((a, b) => a + b, 0);
   const factSource = v.facts[0]?.provenance;
   const marques = [
-    { make: "Ferrari", count: brands.Ferrari ?? 0, demo: "/demo/ferrari-458", demoLabel: "View in 3D", note: "Genuine Ferrari parts, new and used" },
-    { make: "Lamborghini", count: brands.Lamborghini ?? 0, demo: "/demo/lamborghini", demoLabel: "View in 3D", note: "Genuine Lamborghini parts, new and used" },
-    { make: "Maserati", count: brands.Maserati ?? 0, demo: "", demoLabel: "", note: "Genuine Maserati parts, new and used" },
+    { make: "Ferrari", count: brands.Ferrari ?? 0, note: "Genuine Ferrari parts, new and used" },
+    { make: "Lamborghini", count: brands.Lamborghini ?? 0, note: "Genuine Lamborghini parts, new and used" },
+    { make: "Maserati", count: brands.Maserati ?? 0, note: "Genuine Maserati parts, new and used" },
   ];
 
   return (
     <>
-      {/* Hero: the full-screen 3D explorer (Ferrari / Lamborghini / Maserati), group details below. */}
-      <Explorer vehicle={v} assemblies={list} initialCode="0001" hero={
+      {/* Hero: a real Ferrari photo with tappable spare-part points; the group finder sits below. */}
+      <Explorer vehicle={v} assemblies={list} initialCode="0001" stage={<PhotoStage spots={spots} />} hero={
         <div className="hero-copy">
           <div className="eyebrow">Modena &amp; Dubai · Worldwide delivery</div>
           <h1>Genuine Ferrari, Lamborghini &amp; Maserati <em>parts.</em></h1>
-          <p>Explore the car in 3D, find the part, and send an enquiry. We confirm fitment against your VIN before anything ships.</p>
+          <p>Tap a point on the car to find the part, then send an enquiry. We confirm fitment against your VIN before anything ships.</p>
           <div className="hero-actions">
             <Link className="btn primary" href="/store">Browse {total} parts</Link>
             <a className="btn" href="tel:+97143287914">Call<span className="hide-sm"> +971 4 328 7914</span></a>
@@ -59,7 +60,7 @@ export default async function Home() {
               <p className="muted">{m.note}</p>
               <div className="marque-actions">
                 <Link className="btn small primary" href={`/store?brand=${m.make}`}>Shop {m.make}</Link>
-                {m.demo ? <Link className="btn small" href={m.demo}>{m.demoLabel}</Link> : <span className="marque-soon">3D model coming soon</span>}
+                
               </div>
             </article>
           ))}
@@ -81,7 +82,7 @@ export default async function Home() {
           <h2 id="how-h">From the diagram to <em>your door.</em></h2>
         </div>
         <TiltGrid className="steps-wrap" selector=".steps li" tilt={0.6}><ol className="steps">
-          <li><b>1</b><h3>Find the part</h3><p>Spin the car, open an assembly group, or search all {total} listed parts by name or part number.</p></li>
+          <li><b>1</b><h3>Find the part</h3><p>Tap a point on the car, open an assembly group, or search all {total} listed parts by name or part number.</p></li>
           <li><b>2</b><h3>Add it to your enquiry</h3><p>Collect parts and groups in one list. Prices are on request, so nothing is charged online.</p></li>
           <li><b>3</b><h3>We check fitment</h3><p>Send your VIN. We confirm the part number and fitment, then reply with price and availability.</p></li>
         </ol></TiltGrid>

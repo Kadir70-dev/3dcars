@@ -68,7 +68,12 @@ export default async function Sources() {
         </section>
       </div>
       <section className="section" style={{ paddingTop: 40 }} aria-labelledby="credits-h">
-        <h2 id="credits-h" style={{ fontSize: 30, marginBottom: 12 }}>3D model credits</h2>
+        <h2 id="credits-h" style={{ fontSize: 30, marginBottom: 12 }}>Photo and 3D model credits</h2>
+        <p className="muted" style={{ maxWidth: 760 }}>
+          The Ferrari photo on the home page is “<a href="https://commons.wikimedia.org/wiki/File:Ferrari_488_GTB_IMG_4120.jpg" target="_blank" rel="noreferrer">Ferrari 488 GTB IMG 4120.jpg</a>”
+          by Alexander Migl, licensed under <a href="https://creativecommons.org/licenses/by-sa/4.0" target="_blank" rel="noreferrer">CC BY-SA 4.0</a>, via Wikimedia Commons.
+          Changes: resized, and the number plate blurred. The photo shows a privately owned car, not Autovivo stock. Ferrari is a trademark of Ferrari S.p.A.
+        </p>
         <p className="muted" style={{ maxWidth: 760 }}>
           The 3D demo uses “<a href={A.sourceUrl} target="_blank" rel="noreferrer">{A.title}</a>” by {A.author}, licensed under{" "}
           <a href={A.licenseUrl} target="_blank" rel="noreferrer">{A.license}</a>, obtained via the{" "}
