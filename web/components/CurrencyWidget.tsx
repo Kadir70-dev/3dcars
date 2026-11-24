@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useId, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 import { T, useT } from "@/lib/i18n";
 
 // AED is pegged to USD at 3.6725, so EUR/AED = ECB EUR/USD x 3.6725 (ECB reference rate via Frankfurter, updated daily).
@@ -53,6 +53,38 @@ function Flag({ code }: { code: Cur }) {
   );
 }
 
+function CurPick({ value, onChange, label }: { value: Cur; onChange: (c: Cur) => void; label: string }) {
+  const [o, setO] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (!o) return;
+    const away = (e: PointerEvent) => { if (!ref.current?.contains(e.target as Node)) setO(false); };
+    const key = (e: KeyboardEvent) => { if (e.key === "Escape") { e.stopPropagation(); setO(false); } };
+    document.addEventListener("pointerdown", away);
+    document.addEventListener("keydown", key, true);
+    return () => { document.removeEventListener("pointerdown", away); document.removeEventListener("keydown", key, true); };
+  }, [o]);
+  return (
+    <div className="fx-pick" ref={ref}>
+      <button type="button" className="fx-pick-btn" aria-haspopup="listbox" aria-expanded={o} aria-label={label} onClick={() => setO((v) => !v)}>
+        <Flag code={value} /><b>{value}</b>
+        <svg width="10" height="6" viewBox="0 0 10 6" aria-hidden="true"><path d="M1 1l4 4 4-4" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" /></svg>
+      </button>
+      {o && (
+        <ul className="fx-pick-list" role="listbox" aria-label={label}>
+          {CURS.map((c) => (
+            <li key={c} role="option" aria-selected={c === value} tabIndex={0}
+              onClick={() => { onChange(c); setO(false); }}
+              onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onChange(c); setO(false); } }}>
+              <Flag code={c} /><b>{c}</b>{c === value && <span className="fx-tick" aria-hidden="true">✓</span>}
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+  );
+}
+
 export function CurrencyWidget() {
   const t = useT();
   const id = useId();
@@ -91,12 +123,10 @@ export function CurrencyWidget() {
             <strong><T>Currency converter</T></strong>
             <button type="button" className="fx-x" onClick={() => setOpen(false)} aria-label={t("Close")}>×</button>
           </div>
-          <label className="fx-row">
-            <span><Flag code={from} />
-              <select value={from} onChange={(e) => setFrom(e.target.value as Cur)} aria-label={t("From currency")}>{CURS.map((c) => <option key={c}>{c}</option>)}</select>
-            </span>
+          <div className="fx-row">
+            <CurPick value={from} onChange={setFrom} label={t("From currency")} />
             <input inputMode="decimal" value={amount} onChange={(e) => setAmount(e.target.value)} aria-label={from} />
-          </label>
+          </div>
           <div aria-live="polite" style={{ display: "grid", gap: 8 }}>
             {CURS.map((c) => (
               <div className="fx-row fx-out" key={c}>
