@@ -1109,3 +1109,5 @@ html:not([data-past]) body:has(.home-video) header.nav, html:not([data-past]) bo
 html:not([data-past]) body:has(.home-video) header.nav .btn { background: transparent; border-color: #ffffffaa; color: #fff; }
 html:not([data-past]) body:has(.home-video) .mobile-nav { position: fixed; top: 68px; left: 0; right: 0; z-index: 21; background: transparent; }
 html:not([data-past]) body:has(.home-video) .mobile-nav a { color: #fff; border-color: #ffffff88; background: transparent; }
+.fx-row select { appearance: none; -webkit-appearance: none; border: 0; background: transparent; color: var(--text); font: 600 13px var(--mono); padding: 2px 4px; cursor: pointer; }
+.fx-row select option { background: var(--panel); color: var(--text); }
