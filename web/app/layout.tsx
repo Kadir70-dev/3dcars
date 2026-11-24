@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Bodoni_Moda, DM_Mono, Manrope } from "next/font/google";
 import { Footer, Header } from "@/components/Chrome";
 import { CurrencyWidget } from "@/components/CurrencyWidget";
+import Splash from "@/components/Splash";
 import { LangProvider } from "@/lib/i18n";
 import "./globals.css";
 
@@ -26,6 +27,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="en" className={`${sans.variable} ${serif.variable} ${mono.variable}`}>
       <body>
+        <Splash />
         <LangProvider>
           <Header />
           <main id="main">{children}</main>
