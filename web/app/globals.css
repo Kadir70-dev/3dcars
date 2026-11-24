@@ -1076,3 +1076,7 @@ h1 em, h2 em, .hero-copy h1 em { font-weight: 400; }
 @media (prefers-reduced-motion: reduce) { .enq-done circle, .enq-done path { animation: none; stroke-dashoffset: 0; } }
 @media (max-width: 900px) { .enq { grid-template-columns: 1fr; } .enq-side { padding: 28px 22px; gap: 12px; } .enq-side ul { display: none; } }
 @media (max-width: 420px) { .enq-phone { grid-template-columns: 1fr; } }
+
+/* Photo slideshow stage (replaces the 3D viewer) */
+.slideshow { overflow: hidden; background: #111; }
+.slideshow .slide { object-fit: cover; transition: opacity .8s ease; }

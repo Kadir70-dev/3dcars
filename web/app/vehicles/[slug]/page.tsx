@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { api, ApiError, type Assembly, type VehicleDetail } from "@/lib/api";
 import Explorer from "@/components/Explorer";
-import CarStage3D from "@/components/CarStage3D";
+import PhotoSlideshow from "@/components/PhotoSlideshow";
 import { ApiDown } from "@/components/ApiDown";
 import { T } from "@/lib/i18n";
 
@@ -39,7 +39,7 @@ export default async function VehiclePage({ params, searchParams }: Params) {
   return (
     <>
       <h1 className="sr-only">{v.make} {v.model} <T>explorer</T></h1>
-      <Explorer vehicle={v} assemblies={list} initialCode={initial} stage={<CarStage3D />} />
+      <Explorer vehicle={v} assemblies={list} initialCode={initial} stage={<PhotoSlideshow />} />
     </>
   );
 }

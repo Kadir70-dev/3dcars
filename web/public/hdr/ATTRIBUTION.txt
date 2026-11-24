@@ -1,2 +1,0 @@
-studio_small_09_1k.hdr - "Studio Small 09" by Sergej Majboroda, from Poly Haven (https://polyhaven.com/a/studio_small_09). CC0 1.0 (public domain).
-Used only as a reflection environment for the 3D cars.

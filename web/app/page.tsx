@@ -3,7 +3,7 @@ import { api, VEHICLE, type Assembly, type StoreResponse, type VehicleDetail } f
 import Explorer from "@/components/Explorer";
 import { StatusPill } from "@/components/Status";
 import { ApiDown } from "@/components/ApiDown";
-import CarStage3D from "@/components/CarStage3D";
+import PhotoSlideshow from "@/components/PhotoSlideshow";
 import TiltGrid from "@/components/TiltGrid";
 import CountUp from "@/components/CountUp";
 import EnquiryForm from "@/components/EnquiryForm";
@@ -35,7 +35,7 @@ export default async function Home() {
   return (
     <>
       {/* Hero: a real Ferrari photo with tappable spare-part points; the group finder sits below. */}
-      <Explorer vehicle={v} assemblies={list} initialCode="0001" stage={<CarStage3D />} hero={
+      <Explorer vehicle={v} assemblies={list} initialCode="0001" stage={<PhotoSlideshow />} hero={
         <div className="hero-copy">
           <div className="eyebrow"><T>Modena & Dubai · Worldwide delivery</T></div>
           <h1><T>{"Ferrari, Lamborghini & Maserati: we provide <em>bumper-to-bumper</em> spare parts."}</T></h1>

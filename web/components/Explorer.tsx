@@ -1,17 +1,12 @@
 "use client";
-import dynamic from "next/dynamic";
 import Link from "next/link";
 import { useCallback, useDeferredValue, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { api, type Assembly, type AssemblyDetail, type VehicleDetail } from "@/lib/api";
 import { shortlist, useShortlist } from "@/lib/shortlist";
 import { SCHEMATIC_REGIONS } from "./Schematic";
-import CarSwitcher from "./CarSwitcher";
 import { Known, ProvenanceNote, StatusPill } from "./Status";
-import { ModelControls, useModelState } from "./ModelControls";
-import { selectionForMesh, type Selection } from "@/lib/explode";
+import type { Selection } from "@/lib/explode";
 import { L, T, useT } from "@/lib/i18n";
-
-const Viewer3D = dynamic(() => import("./Viewer3D"), { ssr: false, loading: () => <div className="viewer-canvas" /> });
 
 interface Props { vehicle: VehicleDetail; assemblies: Assembly[]; initialCode: string | null; hero?: ReactNode; /** A real-photo stage; replaces the 3D car switcher when given. */ stage?: ReactNode }
 
@@ -31,15 +26,8 @@ export default function Explorer({ vehicle, assemblies, initialCode, hero, stage
   const [detail, setDetail] = useState<AssemblyDetail | null>(null);
   const [loadError, setLoadError] = useState(false);
   const q = useDeferredValue(query.trim().toLowerCase());
-  const model = vehicle.model3d;
-  const source = useMemo(() => (model ? { type: "url" as const, url: model.url } : null), [model]);
-  const bindings = useMemo(() => model?.bindings ?? [], [model]);
-  const m = useModelState(bindings, sel);
-  const boundParts = useMemo(() => new Set(bindings.map((b) => b.partId).filter((x): x is number => x !== null)), [bindings]);
-  const pickMesh = useCallback((name: string) => {
-    const s = selectionForMesh(bindings, name);
-    if (s) { fromModel.current = true; setSel(s); }
-  }, [bindings]);
+  const model = null;
+  const boundParts = useMemo(() => new Set<number>(), []);
 
   const visible = useMemo(
     () => assemblies.filter((a) => (!system || a.systemSlug === system) && (!q || a.code.includes(q) || a.name.toLowerCase().includes(q))),
@@ -73,8 +61,8 @@ export default function Explorer({ vehicle, assemblies, initialCode, hero, stage
   return (
     <>
       {!model && (
-        // Full-screen 3D stage: just the cars, tabs on top, Assemble / Disassemble at the bottom.
-        <L as="section" className="explorer-stage" aria-label="3D cars with parts markers">{hero}{stage ?? <CarSwitcher />}</L>
+        // Full-screen photo stage: just the cars, tabs on top, Assemble / Disassemble at the bottom.
+        <L as="section" className="explorer-stage" aria-label="3D cars with parts markers">{hero}{stage}</L>
       )}
       <div className="wrap explorer-below">
       {!model && (
@@ -85,19 +73,6 @@ export default function Explorer({ vehicle, assemblies, initialCode, hero, stage
         </L>
       )}
       <div className={model ? "explorer" : "explorer explorer-solo"}>
-        {model && source && (
-          <section className="card viewer" aria-labelledby="viewer-h">
-            <h2 id="viewer-h" className="sr-only"><T>Vehicle view</T></h2>
-            <div className="viewer-tag">
-              <span className="pill verified"><T>Licensed 3D ·</T> {model.licensor}</span>
-              {!model.isRealVehicleGeometry && <span className="pill unverified"><T>Stylised — not exact vehicle geometry</T></span>}
-            </div>
-            <Viewer3D source={source} bindings={bindings} label={t("3D model of the {name}. Drag to rotate, scroll to zoom; use the lists for keyboard selection.", { name: `${vehicle.make} ${vehicle.model}` })}
-              highlighted={m.highlighted} exploded={m.exploded} hidden={m.hidden} isolate={m.isolate}
-              focusNonce={m.focusNonce} resetNonce={m.resetNonce} onPickMesh={pickMesh} />
-            <ModelControls m={m} selectionLabel={selectionLabel} />
-          </section>
-        )}
 
         <DetailPanel slug={vehicle.slug} assembly={selected} detail={detail?.code === code ? detail : null} error={loadError}
           boundParts={boundParts} selectedPartId={sel.partId} onSelectPart={(id) => code && setSel({ code, partId: id })} />
