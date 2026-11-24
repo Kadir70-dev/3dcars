@@ -1098,14 +1098,14 @@ html.splash-on { overflow: hidden; }
 @keyframes sp-bar { 0%, 100% { transform: scaleY(.2); opacity: .4; } 50% { transform: scaleY(1); opacity: 1; } }
 @media (prefers-reduced-motion: reduce) { .splash-ring, .splash-lines i { animation: none; } }
 
-/* Home: a single full-screen video; navbar 100% transparent on top of it */
-.home-video { position: fixed; inset: 0; background: #000; z-index: 0; }
+/* Home: full-screen video; navbar 100% transparent on top of it until you scroll past */
+.home-video { position: relative; height: 100svh; background: #000; }
 .home-video video { width: 100%; height: 100%; object-fit: cover; display: block; }
-body:has(.home-video) .topbar, body:has(.home-video) footer.footer, body:has(.home-video) .fx { display: none; }
-body:has(.home-video) .mobile-nav { position: fixed; top: 68px; left: 0; right: 0; z-index: 21; background: transparent; }
-body:has(.home-video) .mobile-nav a { color: #fff; border-color: #ffffff88; background: transparent; }
-body:has(.home-video) header.nav { position: fixed; top: 0; left: 0; right: 0; background: transparent; background: transparent !important; border: 0; box-shadow: none; }
-body:has(.home-video) header.nav::after { display: none; }
-body:has(.home-video) header.nav, body:has(.home-video) header.nav a, body:has(.home-video) header.nav .wordmark, body:has(.home-video) header.nav .brand-sub { color: #fff; text-shadow: 0 1px 10px #0009; }
-body:has(.home-video) header.nav .btn { background: transparent; border-color: #ffffffaa; color: #fff; }
-body:has(.home-video) { overflow: hidden; }
+body:has(.home-video) .topbar { display: none; }
+body:has(.home-video) header.nav { position: fixed; top: 0; left: 0; right: 0; }
+html:not([data-past]) body:has(.home-video) header.nav { background: transparent !important; border: 0; box-shadow: none; }
+html:not([data-past]) body:has(.home-video) header.nav::after { display: none; }
+html:not([data-past]) body:has(.home-video) header.nav, html:not([data-past]) body:has(.home-video) header.nav a, html:not([data-past]) body:has(.home-video) header.nav .wordmark, html:not([data-past]) body:has(.home-video) header.nav .brand-sub { color: #fff; text-shadow: 0 1px 10px #0009; }
+html:not([data-past]) body:has(.home-video) header.nav .btn { background: transparent; border-color: #ffffffaa; color: #fff; }
+html:not([data-past]) body:has(.home-video) .mobile-nav { position: fixed; top: 68px; left: 0; right: 0; z-index: 21; background: transparent; }
+html:not([data-past]) body:has(.home-video) .mobile-nav a { color: #fff; border-color: #ffffff88; background: transparent; }
