@@ -21,7 +21,7 @@ export const metadata: Metadata = {
   icons: { icon: "/autovivo/logo.png", apple: "/autovivo/logo.png" },
 };
 
-export const viewport: Viewport = { themeColor: "#fffaf8", width: "device-width", initialScale: 1, viewportFit: "cover" };
+export const viewport: Viewport = { themeColor: "#0b0b0c", width: "device-width", initialScale: 1, viewportFit: "cover" };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
