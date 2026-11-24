@@ -59,7 +59,6 @@ export function CurrencyWidget() {
   const [open, setOpen] = useState(false);
   const [amount, setAmount] = useState("100");
   const [from, setFrom] = useState<Cur>("EUR");
-  const [to, setTo] = useState<Cur>("AED");
   const [rate, setRate] = useState<Rate>({ ...FALLBACK, live: false });
 
   useEffect(() => {
@@ -80,41 +79,31 @@ export function CurrencyWidget() {
 
   const n = parseFloat(amount.replace(",", "."));
   const perEur: Record<Cur, number> = { EUR: 1, USD: rate.usd, AED: rate.aed };
-  const result = Number.isFinite(n) && n >= 0 ? (n / perEur[from]) * perEur[to] : null;
+  const valid = Number.isFinite(n) && n >= 0;
+  const conv = (c: Cur) => (valid ? (n / perEur[from]) * perEur[c] : null);
   const fmt = (v: number) => v.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-  const pick = (side: "from" | "to", c: Cur) => {
-    const other = side === "from" ? to : from;
-    if (c === other) { setFrom(side === "from" ? c : to); setTo(side === "from" ? from : c); return; }
-    if (side === "from") setFrom(c); else setTo(c);
-  };
-  const swap = () => {
-    // Carry the converted value over so the swap feels like flipping the same conversion.
-    if (result !== null) setAmount(result.toFixed(2));
-    setFrom(to); setTo(from);
-  };
 
   return (
     <div className="fx">
       {open && (
         <div className="fx-panel" role="dialog" aria-label={t("Currency converter")} id={id}>
           <div className="fx-head">
-            <strong>{from} → {to}</strong>
+            <strong><T>Currency converter</T></strong>
             <button type="button" className="fx-x" onClick={() => setOpen(false)} aria-label={t("Close")}>×</button>
           </div>
           <label className="fx-row">
             <span><Flag code={from} />
-              <select value={from} onChange={(e) => pick("from", e.target.value as Cur)} aria-label={t("From currency")}>{CURS.map((c) => <option key={c}>{c}</option>)}</select>
+              <select value={from} onChange={(e) => setFrom(e.target.value as Cur)} aria-label={t("From currency")}>{CURS.map((c) => <option key={c}>{c}</option>)}</select>
             </span>
             <input inputMode="decimal" value={amount} onChange={(e) => setAmount(e.target.value)} aria-label={from} />
           </label>
-          <button type="button" className="fx-swap" onClick={swap} aria-label={t("Swap currencies")}>
-            <span aria-hidden="true">↑↓</span>
-          </button>
-          <div className="fx-row fx-out" aria-live="polite">
-            <span><Flag code={to} />
-              <select value={to} onChange={(e) => pick("to", e.target.value as Cur)} aria-label={t("To currency")}>{CURS.map((c) => <option key={c}>{c}</option>)}</select>
-            </span>
-            <output>{result === null ? "—" : fmt(result)}</output>
+          <div aria-live="polite" style={{ display: "grid", gap: 8 }}>
+            {CURS.map((c) => (
+              <div className="fx-row fx-out" key={c}>
+                <span><Flag code={c} />{c}</span>
+                <output>{conv(c) === null ? "—" : fmt(conv(c) as number)}</output>
+              </div>
+            ))}
           </div>
           <p className="fx-note">
             1 EUR = {rate.aed.toFixed(4)} AED · 1 EUR = {rate.usd.toFixed(4)} USD ·{" "}
