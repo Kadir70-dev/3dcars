@@ -6,6 +6,7 @@
 import { useEffect, useRef, useState } from "react";
 import * as THREE from "three";
 import { OrbitControls } from "three/addons/controls/OrbitControls.js";
+import { RGBELoader } from "three/addons/loaders/RGBELoader.js";
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 import { DRACOLoader } from "three/addons/loaders/DRACOLoader.js";
 import { RoomEnvironment } from "three/addons/environments/RoomEnvironment.js";
@@ -13,6 +14,7 @@ import type { MeshBinding } from "@/lib/api";
 import { easeInOut, explodeTargets, missingMeshes, type Vec3 } from "@/lib/explode";
 import { LabelLayer, type LabelState } from "./viewerLabels";
 import { toParentSpace } from "@/lib/sceneUtils";
+import { useT } from "@/lib/i18n";
 
 /** `tune` may adjust materials and make duplicate node names unique; it must not move geometry. */
 export type ModelSource =
@@ -56,6 +58,12 @@ interface Props {
    * trackpad pinch zooms), and one finger swipes the page vertically instead of being captured by the canvas.
    */
   scrollSafe?: boolean;
+  /** Showroom look: HDRI reflections, clear-coated paint, soft ground shadow. */
+  realistic?: boolean;
+  /** Parts markers glued to the 3D car: each mesh name gets a dot that follows the rotation and hides when facing away. */
+  pins?: { key: string; label: string; meshes: string[] }[];
+  activePin?: string | null;
+  onPin?: (key: string) => void;
 }
 
 export interface MeshStats { triangles: number; sourceMesh: string; islands: number | null }
@@ -92,6 +100,7 @@ const BLACK = new THREE.Color(0);
 
 export default function Viewer3D(props: Props) {
   const { source, bindings, label, highlighted, exploded, hidden, isolate, onPickMesh, focusNonce, resetNonce } = props;
+  const t = useT();
   const look = useRef<{ s: LabelState; lit: Set<string>; hidden: Set<string> }>({ s: { focus: new Set(), showAll: false, hover: null }, lit: new Set(), hidden: new Set() });
   const labelsRef = useRef(props.labels);
   const movingRef = useRef(props.onMoving);
@@ -103,14 +112,17 @@ export default function Viewer3D(props: Props) {
   const [state, setState] = useState<"loading" | "ready" | "error">("loading");
   const [missing, setMissing] = useState<string[]>([]);
   const [progress, setProgress] = useState<number | null>(null);
+  const pinEls = useRef(new Map<string, HTMLButtonElement>());
+  const pinCb = useRef(props.onPin);
 
-  useEffect(() => { pickRef.current = onPickMesh; movingRef.current = props.onMoving; nothingRef.current = props.onPickNothing; }, [onPickMesh, props.onMoving, props.onPickNothing]);
+  useEffect(() => { pickRef.current = onPickMesh; movingRef.current = props.onMoving; nothingRef.current = props.onPickNothing; pinCb.current = props.onPin; }, [onPickMesh, props.onMoving, props.onPickNothing, props.onPin]);
   useEffect(() => {
     look.current = { s: { focus: props.labelFocus ?? new Set(), showAll: Boolean(props.showAllLabels), hover: rt.current?.hover ?? null }, lit: highlighted, hidden };
   }, [props.labelFocus, props.showAllLabels, highlighted, hidden]);
 
   useEffect(() => {
     const el = host.current!;
+    let disposed = false;
     const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, powerPreference: "high-performance" });
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, window.matchMedia("(pointer: coarse)").matches ? 1.5 : 2));
     renderer.toneMapping = THREE.ACESFilmicToneMapping;
@@ -121,11 +133,24 @@ export default function Viewer3D(props: Props) {
     const scene = new THREE.Scene();
     const pmrem = new THREE.PMREMGenerator(renderer);
     scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
+    if (props.realistic) {
+      renderer.toneMappingExposure = 1.08;
+      // A real photographed studio gives the paint and glass something believable to reflect.
+      new RGBELoader().load("/hdr/studio_small_09_1k.hdr", (tex) => {
+        if (disposed) { tex.dispose(); return; }
+        tex.mapping = THREE.EquirectangularReflectionMapping;
+        scene.environment = pmrem.fromEquirectangular(tex).texture;
+        tex.dispose();
+      });
+    }
     const key = new THREE.DirectionalLight(0xffffff, 1.6);
     key.position.set(4, 6, 3);
     scene.add(key, new THREE.HemisphereLight(0xffffff, 0x202020, 0.4));
 
     const camera = new THREE.PerspectiveCamera(35, 1, 0.01, 1000);
+    const view = { w: 1, h: 1 };
+    const anchors: { el: HTMLButtonElement; at: THREE.Vector3; out: THREE.Vector3 }[] = [];
+    const tmp = new THREE.Vector3(), toCam = new THREE.Vector3(), mid = new THREE.Vector3();
     const controls = new OrbitControls(camera, renderer.domElement);
     controls.enableDamping = true;
     controls.maxPolarAngle = props.spin360 ? Math.PI : Math.PI * 0.49;
@@ -150,6 +175,7 @@ export default function Viewer3D(props: Props) {
     const resize = () => {
       const { width, height } = el.getBoundingClientRect();
       renderer.setSize(width, height, false);
+      view.w = width; view.h = height;
       camera.aspect = width / Math.max(height, 1);
       camera.updateProjectionMatrix();
     };
@@ -157,7 +183,6 @@ export default function Viewer3D(props: Props) {
     ro.observe(el);
     resize();
 
-    let disposed = false;
     let raf = 0;
     const names = new Set(bindings.map((b) => b.meshName));
 
@@ -181,10 +206,47 @@ export default function Viewer3D(props: Props) {
         const mats = (Array.isArray(m.material) ? m.material : [m.material]).map((mat) => ({ mat, opacity: mat.opacity, transparent: mat.transparent, depthWrite: mat.depthWrite }));
         meshes.push({ mesh: m, owner, mats });
       });
+      if (props.realistic) {
+        for (const { mesh } of meshes) {
+          const list = Array.isArray(mesh.material) ? mesh.material : [mesh.material];
+          const upgraded = list.map((mat) => {
+            const std = mat as THREE.MeshStandardMaterial;
+            if (!/body|paint|carpaint/i.test(mat.name) || !std.isMeshStandardMaterial || (std as THREE.MeshPhysicalMaterial).isMeshPhysicalMaterial) return mat;
+            const phys = new THREE.MeshPhysicalMaterial({ name: mat.name, color: std.color, map: std.map, metalness: 0.55, roughness: 0.3, clearcoat: 1, clearcoatRoughness: 0.04, envMapIntensity: 1.25 });
+            mat.dispose();
+            return phys;
+          });
+          mesh.material = Array.isArray(mesh.material) ? upgraded : upgraded[0];
+        }
+        for (const m of meshes) m.mats = (Array.isArray(m.mesh.material) ? m.mesh.material : [m.mesh.material]).map((mat) => ({ mat, opacity: mat.opacity, transparent: mat.transparent, depthWrite: mat.depthWrite }));
+      }
       scene.add(root);
       const box = new THREE.Box3().setFromObject(root);
       const size = box.getSize(new THREE.Vector3()).length();
       const center = box.getCenter(new THREE.Vector3());
+      if (props.realistic) {
+        // Soft contact shadow under the car (a faded disc, no shadow-map cost).
+        const c = document.createElement("canvas"); c.width = c.height = 256;
+        const g = c.getContext("2d")!; const grad = g.createRadialGradient(128, 128, 8, 128, 128, 128);
+        grad.addColorStop(0, "rgba(40,16,16,0.5)"); grad.addColorStop(0.5, "rgba(40,16,16,0.16)"); grad.addColorStop(1, "rgba(40,16,16,0)");
+        g.fillStyle = grad; g.fillRect(0, 0, 256, 256);
+        const dims = box.getSize(new THREE.Vector3());
+        const shadow = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), new THREE.MeshBasicMaterial({ map: new THREE.CanvasTexture(c), transparent: true, depthWrite: false }));
+        shadow.rotation.x = -Math.PI / 2;
+        shadow.scale.set(dims.x * 1.5, dims.z * 1.15, 1);
+        shadow.position.set(center.x, box.min.y + 0.003 * size, center.z);
+        shadow.renderOrder = -1;
+        shadow.userData.isShadow = true;
+        scene.add(shadow);
+      }
+      anchors.length = 0;
+      for (const pin of props.pins ?? []) for (const name of pin.meshes) {
+        const el = pinEls.current.get(`${pin.key}:${name}`); const o = root.getObjectByName(name);
+        if (!el) continue;
+        if (!o) { el.style.display = "none"; continue; }
+        const at = new THREE.Box3().setFromObject(o).getCenter(new THREE.Vector3());
+        anchors.push({ el, at, out: at.clone().sub(center).normalize() });
+      }
       camera.near = size / 100;
       camera.far = size * 20;
       // Narrow (portrait) screens need the camera further back so the whole car fits across.
@@ -313,6 +375,20 @@ export default function Viewer3D(props: Props) {
         }
       }
       controls.update();
+      if (anchors.length) {
+        camera.updateMatrixWorld(true); // project with this frame's camera, not the previous render's
+        const { w, h } = view;
+        mid.copy(controls.target);
+        toCam.copy(camera.position).sub(mid).normalize();
+        for (const a of anchors) {
+          tmp.copy(a.at).project(camera);
+          const facing = a.out.dot(toCam);
+          const on = tmp.z < 1 && facing > 0.1 && Math.abs(tmp.x) < 1.05 && Math.abs(tmp.y) < 1.05;
+          a.el.style.opacity = on ? "1" : "0";
+          a.el.style.pointerEvents = on ? "auto" : "none";
+          if (on) a.el.style.transform = `translate3d(${((tmp.x * 0.5 + 0.5) * w).toFixed(1)}px, ${((-tmp.y * 0.5 + 0.5) * h).toFixed(1)}px, 0) translate(-50%, -50%)`;
+        }
+      }
       renderer.render(scene, camera);
       raf = requestAnimationFrame(tick);
     };
@@ -342,7 +418,7 @@ export default function Viewer3D(props: Props) {
       el.removeChild(renderer.domElement);
       rt.current = null;
     };
-  }, [source, bindings, props.labelLines, props.spin360, props.scrollSafe]);
+  }, [source, bindings, props.labelLines, props.spin360, props.scrollSafe, props.realistic, props.pins]);
 
   // Explode targets per mesh.
   useEffect(() => {
@@ -408,12 +484,20 @@ export default function Viewer3D(props: Props) {
   return (
     <div className="viewer-canvas" ref={host} role="region" aria-label={label}>
       {(!props.bare || props.scrollSafe) && <div className="viewer-toolbar">
-        <button className="icon-btn" type="button" onClick={() => zoom(0.8)} aria-label="Zoom in">+</button>
-        <button className="icon-btn" type="button" onClick={() => zoom(1.25)} aria-label="Zoom out">−</button>
-        <button className="icon-btn" type="button" onClick={home} aria-label="Reset camera">⟲</button>
+        <button className="icon-btn" type="button" onClick={() => zoom(0.8)} aria-label={t("Zoom in")}>+</button>
+        <button className="icon-btn" type="button" onClick={() => zoom(1.25)} aria-label={t("Zoom out")}>−</button>
+        <button className="icon-btn" type="button" onClick={home} aria-label={t("Reset camera")}>⟲</button>
       </div>}
-      {state === "loading" && <p className="asset-gate" role="status">Loading 3D model{progress !== null ? ` ${progress}%` : "…"}</p>}
-      {state === "error" && <p className="asset-gate" role="alert">The 3D model could not be loaded. Use the parts list instead.</p>}
+      {(props.pins ?? []).flatMap((p) => p.meshes.map((m) => (
+        <button key={`${p.key}:${m}`} type="button" className="hotspot hotspot-3d" style={{ opacity: 0, pointerEvents: "none" }}
+          ref={(el) => { if (el) pinEls.current.set(`${p.key}:${m}`, el); else pinEls.current.delete(`${p.key}:${m}`); }}
+          data-active={props.activePin === p.key || undefined} aria-label={p.label}
+          onClick={() => pinCb.current?.(p.key)}>
+          <span className="hotspot-dot" aria-hidden="true" /><span className="hotspot-label" aria-hidden="true">{p.label}</span>
+        </button>
+      )))}
+      {state === "loading" && <p className="asset-gate" role="status">{t("Loading 3D model")}{progress !== null ? ` ${progress}%` : "…"}</p>}
+      {state === "error" && <p className="asset-gate" role="alert">{t("The 3D model could not be loaded. Use the parts list instead.")}</p>}
       {state === "ready" && missing.length > 0 && (
         <p className="asset-gate" role="status">{missing.length} bound mesh name(s) not found in this model: {missing.slice(0, 4).join(", ")}</p>
       )}

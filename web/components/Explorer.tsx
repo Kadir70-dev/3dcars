@@ -9,6 +9,7 @@ import CarSwitcher from "./CarSwitcher";
 import { Known, ProvenanceNote, StatusPill } from "./Status";
 import { ModelControls, useModelState } from "./ModelControls";
 import { selectionForMesh, type Selection } from "@/lib/explode";
+import { L, T, useT } from "@/lib/i18n";
 
 const Viewer3D = dynamic(() => import("./Viewer3D"), { ssr: false, loading: () => <div className="viewer-canvas" /> });
 
@@ -18,6 +19,7 @@ interface Props { vehicle: VehicleDetail; assemblies: Assembly[]; initialCode: s
 const GROUP_PREVIEW = 16;
 
 export default function Explorer({ vehicle, assemblies, initialCode, hero, stage }: Props) {
+  const t = useT();
   const [query, setQuery] = useState("");
   const [showAll, setShowAll] = useState(false);
   const [system, setSystem] = useState("");
@@ -72,25 +74,25 @@ export default function Explorer({ vehicle, assemblies, initialCode, hero, stage
     <>
       {!model && (
         // Full-screen 3D stage: just the cars, tabs on top, Assemble / Disassemble at the bottom.
-        <section className={stage ? "explorer-stage photo-stage" : "explorer-stage"} aria-label={stage ? "Ferrari parts finder" : "3D cars"}>{hero}{stage ?? <CarSwitcher />}</section>
+        <L as="section" className="explorer-stage" aria-label="3D cars with parts markers">{hero}{stage ?? <CarSwitcher />}</L>
       )}
       <div className="wrap explorer-below">
       {!model && (
-        <div className="systems explorer-chips" aria-label="Jump to a group">
+        <L className="systems explorer-chips" aria-label="Jump to a group">
           {SCHEMATIC_REGIONS.map((r) => (
-            <button key={r.code} type="button" className="chip" aria-pressed={code === r.code} onClick={() => setCode(r.code)}>{r.label}</button>
+            <button key={r.code} type="button" className="chip" aria-pressed={code === r.code} onClick={() => setCode(r.code)}><T>{r.label}</T></button>
           ))}
-        </div>
+        </L>
       )}
       <div className={model ? "explorer" : "explorer explorer-solo"}>
         {model && source && (
           <section className="card viewer" aria-labelledby="viewer-h">
-            <h2 id="viewer-h" className="sr-only">Vehicle view</h2>
+            <h2 id="viewer-h" className="sr-only"><T>Vehicle view</T></h2>
             <div className="viewer-tag">
-              <span className="pill verified">Licensed 3D · {model.licensor}</span>
-              {!model.isRealVehicleGeometry && <span className="pill unverified">Stylised — not exact vehicle geometry</span>}
+              <span className="pill verified"><T>Licensed 3D ·</T> {model.licensor}</span>
+              {!model.isRealVehicleGeometry && <span className="pill unverified"><T>Stylised — not exact vehicle geometry</T></span>}
             </div>
-            <Viewer3D source={source} bindings={bindings} label={`3D model of the ${vehicle.make} ${vehicle.model}. Drag to rotate, scroll to zoom; use the lists for keyboard selection.`}
+            <Viewer3D source={source} bindings={bindings} label={t("3D model of the {name}. Drag to rotate, scroll to zoom; use the lists for keyboard selection.", { name: `${vehicle.make} ${vehicle.model}` })}
               highlighted={m.highlighted} exploded={m.exploded} hidden={m.hidden} isolate={m.isolate}
               focusNonce={m.focusNonce} resetNonce={m.resetNonce} onPickMesh={pickMesh} />
             <ModelControls m={m} selectionLabel={selectionLabel} />
@@ -103,38 +105,38 @@ export default function Explorer({ vehicle, assemblies, initialCode, hero, stage
 
       <section className="card catalog" aria-labelledby="list-h">
         <div className="section-head" style={{ marginBottom: 16 }}>
-          <div><div className="eyebrow">Assembly index</div><h2 id="list-h" style={{ fontSize: 30, marginTop: 8 }}>Find a group</h2></div>
-          <Link className="btn small" href="/catalog">Full catalog search →</Link>
+          <div><div className="eyebrow"><T>Assembly index</T></div><h2 id="list-h" style={{ fontSize: 30, marginTop: 8 }}><T>Find a group</T></h2></div>
+          <Link className="btn small" href="/catalog"><T>Full catalog search →</T></Link>
         </div>
         <div className="tools">
           <div className="search-wrap">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true"><circle cx="11" cy="11" r="7" /><path d="m20 20-3.5-3.5" /></svg>
-            <input className="field" type="search" value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search by group name or number…" aria-label="Search assembly groups" />
+            <input className="field" type="search" value={query} onChange={(e) => setQuery(e.target.value)} placeholder={t("Search by group name or number…")} aria-label={t("Search assembly groups")} />
           </div>
-          <select className="field" value={system} onChange={(e) => setSystem(e.target.value)} aria-label="Filter by vehicle system">
-            <option value="">All systems</option>
-            {vehicle.systems.map((s) => <option key={s.slug} value={s.slug}>{s.name} ({s.assemblyCount})</option>)}
+          <select className="field" value={system} onChange={(e) => setSystem(e.target.value)} aria-label={t("Filter by vehicle system")}>
+            <option value=""><T>All systems</T></option>
+            {vehicle.systems.map((s) => <option key={s.slug} value={s.slug}>{t(s.name)} ({s.assemblyCount})</option>)}
           </select>
-          {(query || system) && <button type="button" className="btn" onClick={() => { setQuery(""); setSystem(""); }}>Clear</button>}
+          {(query || system) && <button type="button" className="btn" onClick={() => { setQuery(""); setSystem(""); }}><T>Clear</T></button>}
         </div>
-        <p className="result-count" aria-live="polite">{filtering || showAll || shown.length >= visible.length ? `${visible.length} of ${assemblies.length} assembly groups` : `Showing ${shown.length} of ${assemblies.length} assembly groups`}</p>
+        <p className="result-count" aria-live="polite">{filtering || showAll || shown.length >= visible.length ? t("{a} of {b} assembly groups", { a: visible.length, b: assemblies.length }) : t("Showing {a} of {b} assembly groups", { a: shown.length, b: assemblies.length })}</p>
         <div className="groups" ref={groupsRef}>
           {shown.map((a) => (
             <button key={a.code} type="button" className="group" aria-pressed={a.code === code}
               onClick={() => { setCode(a.code); if (window.innerWidth < 1000) document.getElementById("detail")?.scrollIntoView({ behavior: "smooth" }); }}>
               <span className="gcode">{a.code}</span>
-              <span><span className="gname">{a.name}</span><span className="gsys">{a.systemName}{a.partCount ? ` · ${a.partCount} parts` : ""}</span></span>
+              <span><span className="gname"><T>{a.name}</T></span><span className="gsys"><T>{a.systemName ?? ""}</T>{a.partCount ? ` · ${t("{n} parts", { n: a.partCount })}` : ""}</span></span>
             </button>
           ))}
-          {visible.length === 0 && <div className="empty">No groups match. Try a broader term such as “brake” or “door”.</div>}
+          {visible.length === 0 && <div className="empty"><T>No groups match. Try a broader term such as “brake” or “door”.</T></div>}
         </div>
         {shown.length < visible.length && (
           <div className="groups-more">
-            <button type="button" className="btn" onClick={() => setShowAll(true)}>Show all {visible.length} groups</button>
+            <button type="button" className="btn" onClick={() => setShowAll(true)}><T v={{ n: visible.length }}>{"Show all {n} groups"}</T></button>
           </div>
         )}
         {showAll && !filtering && visible.length > GROUP_PREVIEW && (
-          <div className="groups-more"><button type="button" className="btn small" onClick={() => setShowAll(false)}>Show fewer</button></div>
+          <div className="groups-more"><button type="button" className="btn small" onClick={() => setShowAll(false)}><T>Show fewer</T></button></div>
         )}
       </section>
       </div>
@@ -149,45 +151,46 @@ interface DetailProps {
 
 function DetailPanel({ slug, assembly, detail, error, boundParts, selectedPartId, onSelectPart }: DetailProps) {
   const items = useShortlist();
-  if (!assembly) return <aside className="card detail" id="detail"><p className="muted">Select an assembly group.</p></aside>;
+  const t = useT();
+  if (!assembly) return <aside className="card detail" id="detail"><p className="muted"><T>Select an assembly group.</T></p></aside>;
   const inList = items.some((x) => x.kind === "assembly" && x.ref === assembly.code);
   const parts = detail?.parts ?? [];
   return (
     <aside className="card detail" id="detail" aria-live="polite" aria-labelledby="detail-h">
       <div style={{ display: "flex", justifyContent: "space-between", gap: 10, alignItems: "center" }}>
-        <span className="code">Group {assembly.code} · {assembly.systemName}</span>
+        <span className="code"><T>Group</T> {assembly.code} · <T>{assembly.systemName ?? ""}</T></span>
         <StatusPill status={assembly.provenance.verificationStatus} />
       </div>
-      <h3 id="detail-h">{assembly.name}</h3>
+      <h3 id="detail-h"><T>{assembly.name}</T></h3>
       <p className="muted" style={{ margin: 0, fontSize: 14 }}>
-        {assembly.summary ?? "Group title from the public 488 GTB (USA) index. It is not a complete list of the parts inside this assembly."}
+        <T>{assembly.summary ?? "Group title from the public 488 GTB (USA) index. It is not a complete list of the parts inside this assembly."}</T>
       </p>
       <div className="kv">
-        <div><small>Individual parts</small><Known value={parts.length ? parts.length : null} /></div>
-        <div><small>OEM part numbers</small><Known value={parts.some((p) => p.oemPartNumber) ? "See list" : null} /></div>
-        <div><small>Model years</small><Known value={null} missing="Not verified" /></div>
-        <div><small>VIN fitment</small><Known value={null} missing="Not verified" /></div>
+        <div><small><T>Individual parts</T></small><Known value={parts.length ? parts.length : null} /></div>
+        <div><small><T>OEM part numbers</T></small><Known value={parts.some((p) => p.oemPartNumber) ? "See list" : null} /></div>
+        <div><small><T>Model years</T></small><Known value={null} missing="Not verified" /></div>
+        <div><small><T>VIN fitment</T></small><Known value={null} missing="Not verified" /></div>
       </div>
 
-      <h4 className="eyebrow" style={{ margin: "4px 0 0", color: "var(--muted)" }}>Parts in this group</h4>
-      {error && <p className="err-box" role="alert" style={{ marginTop: 10 }}>Part list could not be loaded. Try again shortly.</p>}
+      <h4 className="eyebrow" style={{ margin: "4px 0 0", color: "var(--muted)" }}><T>Parts in this group</T></h4>
+      {error && <p className="err-box" role="alert" style={{ marginTop: 10 }}><T>Part list could not be loaded. Try again shortly.</T></p>}
       {!error && parts.length === 0 && (
-        <div className="empty-parts">No individual parts are loaded for this group yet.<br />They need an authorized Ferrari parts source.</div>
+        <div className="empty-parts"><T>{"No individual parts are loaded for this group yet.<br/>They need an authorized Ferrari parts source."}</T></div>
       )}
       {parts.length > 0 && (
         <table className="parts-table">
-          <thead><tr><th>Ref</th><th>Part</th><th>Qty</th><th>Status</th><th>3D</th></tr></thead>
+          <thead><tr><th><T>Ref</T></th><th><T>Part</T></th><th><T>Qty</T></th><th><T>Status</T></th><th>3D</th></tr></thead>
           <tbody>
             {parts.map((p) => (
               <tr key={`${p.id}-${p.diagramRef}`} aria-selected={selectedPartId === p.id} className={selectedPartId === p.id ? "is-selected" : undefined}>
                 <td className="mono">{p.diagramRef ?? "—"}</td>
-                <td><Link href={`/parts/${p.id}`}>{p.name}</Link><div className="mono muted" style={{ fontSize: 11 }}>{p.oemPartNumber ?? "OEM no. not verified"}</div></td>
+                <td><Link href={`/parts/${p.id}`}>{p.name}</Link><div className="mono muted" style={{ fontSize: 11 }}>{p.oemPartNumber ?? t("OEM no. not verified")}</div></td>
                 <td>{p.quantity ?? "—"}</td>
                 <td><StatusPill status={p.provenance.verificationStatus} /></td>
                 <td>{boundParts.has(p.id)
                   ? <button type="button" className="btn small" aria-pressed={selectedPartId === p.id}
-                      onClick={() => onSelectPart(selectedPartId === p.id ? null : p.id)}>{selectedPartId === p.id ? "Shown" : "Show"}</button>
-                  : <span className="muted" title="No mesh bound to this part yet">—</span>}</td>
+                      onClick={() => onSelectPart(selectedPartId === p.id ? null : p.id)}><T>{selectedPartId === p.id ? "Shown" : "Show"}</T></button>
+                  : <span className="muted" title={t("No mesh bound to this part yet")}>—</span>}</td>
               </tr>
             ))}
           </tbody>
@@ -198,12 +201,12 @@ function DetailPanel({ slug, assembly, detail, error, boundParts, selectedPartId
       <div className="detail-actions">
         <button type="button" className={inList ? "btn" : "btn primary"}
           onClick={() => inList ? shortlist.remove({ kind: "assembly", ref: assembly.code }) : shortlist.add({ kind: "assembly", ref: assembly.code, label: `${assembly.code} · ${assembly.name}` })}>
-          {inList ? "✓ In enquiry list — remove" : "Enquire about this group"}
+          <T>{inList ? "✓ In enquiry list — remove" : "Enquire about this group"}</T>
         </button>
-        <Link className="btn" href={`/catalog?assembly=${assembly.code}`}>Search within this group</Link>
-        <Link className="btn" href="/quote#vin" onClick={() => shortlist.add({ kind: "assembly", ref: assembly.code, label: `${assembly.code} · ${assembly.name}` })}>Confirm fitment with my VIN</Link>
+        <Link className="btn" href={`/catalog?assembly=${assembly.code}`}><T>Search within this group</T></Link>
+        <Link className="btn" href="/quote#vin" onClick={() => shortlist.add({ kind: "assembly", ref: assembly.code, label: `${assembly.code} · ${assembly.name}` })}><T>Confirm fitment with my VIN</T></Link>
       </div>
-      <p className="help" style={{ marginTop: 12 }}>Vehicle: {slug} · Fitment must be confirmed against your VIN before ordering.</p>
+      <p className="help" style={{ marginTop: 12 }}><T>Vehicle:</T> {slug} · <T>Fitment must be confirmed against your VIN before ordering.</T></p>
     </aside>
   );
 }

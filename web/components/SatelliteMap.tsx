@@ -2,6 +2,7 @@
 import "maplibre-gl/dist/maplibre-gl.css";
 import { useEffect, useRef, useState } from "react";
 import type { Map as MLMap } from "maplibre-gl";
+import { L, T, useT } from "@/lib/i18n";
 
 export type Site = {
   id: string; city: string; entity: string; address: string; phone: string; tel: string; hours: string;
@@ -18,6 +19,7 @@ export default function SatelliteMap({ sites }: { sites: Site[] }) {
   const [active, setActive] = useState(sites[0].id);
   const [ready, setReady] = useState(false);
   const site = sites.find((s) => s.id === active) ?? sites[0];
+  const t = useT();
 
   useEffect(() => {
     let raf = 0, dead = false;
@@ -64,31 +66,33 @@ export default function SatelliteMap({ sites }: { sites: Site[] }) {
   useEffect(() => {
     const s = sites.find((x) => x.id === active);
     if (s && map.current) {
-      spin.current = true;
-      map.current.flyTo({ center: [s.lng, s.lat], zoom: 16.6, pitch: 64, bearing: -25, duration: 3200, essential: false });
+      const m = map.current;
+      spin.current = false; // spin's setBearing() would cancel the flight each frame
+      m.once("moveend", () => { spin.current = true; });
+      m.flyTo({ center: [s.lng, s.lat], zoom: 16.6, pitch: 64, bearing: -25, duration: 3200, essential: true });
     }
   }, [active, sites]);
 
   return (
     <div className="sat">
-      <div className="sat-canvas" role="img" aria-label={`3D satellite view of ${site.city}: ${site.address}`}>
+      <div className="sat-canvas" role="img" aria-label={t("3D satellite view of {city}: {address}", { city: site.city, address: site.address })}>
         <div ref={el} style={{ width: "100%", height: "100%" }} />
       </div>
-      {!ready && <div className="sat-loading">Loading satellite view…</div>}
-      <div className="sat-tabs" role="tablist" aria-label="Locations">
+      {!ready && <div className="sat-loading"><T>Loading satellite view…</T></div>}
+      <L className="sat-tabs" role="tablist" aria-label="Locations">
         {sites.map((s) => (
           <button key={s.id} role="tab" aria-selected={s.id === active} onClick={() => setActive(s.id)}>{s.city}</button>
         ))}
-      </div>
+      </L>
       <aside className="sat-card" aria-live="polite">
-        <small>{site.entity}</small>
+        <small><T>{site.entity}</T></small>
         <h2>{site.city}</h2>
-        <p>{site.address}</p>
-        <p><a href={`tel:${site.tel}`}>{site.phone}</a><br />{site.hours}</p>
-        <a className="btn small" href={site.maps} target="_blank" rel="noreferrer">Open in Google Maps ↗</a>
-        {site.approx && <p className="muted" style={{ fontSize: 12 }}>Pin is approximate within Modena.</p>}
+        <p><T>{site.address}</T></p>
+        <p><a href={`tel:${site.tel}`}>{site.phone}</a><br /><T>{site.hours}</T></p>
+        <a className="btn small" href={site.maps} target="_blank" rel="noreferrer"><T>Open in Google Maps ↗</T></a>
+        {site.approx && <p className="muted" style={{ fontSize: 12 }}><T>Pin is approximate within Modena.</T></p>}
       </aside>
-      <p className="sat-hint">Drag to rotate · right-drag or Ctrl-drag to tilt · scroll to zoom</p>
+      <p className="sat-hint"><T>Drag to rotate · right-drag or Ctrl-drag to tilt · scroll to zoom</T></p>
     </div>
   );
 }

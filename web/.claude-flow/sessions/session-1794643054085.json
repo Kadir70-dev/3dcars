@@ -1,0 +1,14 @@
+{
+  "id": "session-1794643054085",
+  "startedAt": "2026-11-14T07:57:34.085Z",
+  "cwd": "/home/kadir70/3dcars/web",
+  "context": {},
+  "metrics": {
+    "edits": 8,
+    "commands": 0,
+    "tasks": 0,
+    "errors": 0
+  },
+  "endedAt": "2026-11-21T09:46:17.646Z",
+  "duration": 611323562
+}

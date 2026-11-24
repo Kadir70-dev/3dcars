@@ -1,11 +1,13 @@
 import Link from "next/link";
-import { api, formatDate, VEHICLE, type Assembly, type StoreResponse, type VehicleDetail } from "@/lib/api";
+import { api, VEHICLE, type Assembly, type StoreResponse, type VehicleDetail } from "@/lib/api";
 import Explorer from "@/components/Explorer";
 import { StatusPill } from "@/components/Status";
 import { ApiDown } from "@/components/ApiDown";
-import PhotoStage from "@/components/PhotoStage";
-import { loadHotspots } from "@/lib/hotspots";
+import CarStage3D from "@/components/CarStage3D";
 import TiltGrid from "@/components/TiltGrid";
+import CountUp from "@/components/CountUp";
+import EnquiryForm from "@/components/EnquiryForm";
+import { L, LocalDate, T } from "@/lib/i18n";
 
 // Rendered per request: Next 16.4 ISR regeneration referenced a CSS chunk missing from the build.
 export const dynamic = "force-dynamic";
@@ -21,7 +23,6 @@ export default async function Home() {
   } catch {
     return <ApiDown />;
   }
-  const spots = await loadHotspots("Ferrari");
   const brands = store.result.brands;
   const total = Object.values(brands).reduce((a, b) => a + b, 0);
   const factSource = v.facts[0]?.provenance;
@@ -34,32 +35,32 @@ export default async function Home() {
   return (
     <>
       {/* Hero: a real Ferrari photo with tappable spare-part points; the group finder sits below. */}
-      <Explorer vehicle={v} assemblies={list} initialCode="0001" stage={<PhotoStage spots={spots} />} hero={
+      <Explorer vehicle={v} assemblies={list} initialCode="0001" stage={<CarStage3D />} hero={
         <div className="hero-copy">
-          <div className="eyebrow">Modena &amp; Dubai · Worldwide delivery</div>
-          <h1>Genuine Ferrari, Lamborghini &amp; Maserati <em>parts.</em></h1>
-          <p>Tap a point on the car to find the part, then send an enquiry. We confirm fitment against your VIN before anything ships.</p>
+          <div className="eyebrow"><T>Modena & Dubai · Worldwide delivery</T></div>
+          <h1><T>{"Ferrari, Lamborghini & Maserati: we provide <em>bumper-to-bumper</em> spare parts."}</T></h1>
+          <p><T>Explore the car in 3D, find the part, then send an enquiry. We confirm fitment against your VIN before anything ships.</T></p>
           <div className="hero-actions">
-            <Link className="btn primary" href="/store">Browse {total} parts</Link>
-            <a className="btn" href="tel:+97143287914">Call<span className="hide-sm"> +971 4 328 7914</span></a>
+            <Link className="btn primary" href="/store"><T v={{ total }}>{"Browse {total} parts"}</T></Link>
+            <a className="btn" href="tel:+97143287914"><T>Call</T><span className="hide-sm"> +971 4 328 7914</span></a>
           </div>
         </div>
       } />
 
       <section className="wrap section reveal" aria-labelledby="marques-h">
         <div className="section-head centered">
-          <div className="eyebrow">Our marques</div>
-          <h2 id="marques-h">Italian <em>icons.</em></h2>
+          <div className="eyebrow"><T>Our marques</T></div>
+          <h2 id="marques-h"><T>{"Italian <em>icons.</em>"}</T></h2>
         </div>
         <TiltGrid className="marques" selector=".marque" tilt={0.7}>
           {marques.map((m) => (
             <article className="card marque" key={m.make}>
-              <span className="marque-count">{m.count}</span>
-              <span className="marque-unit">parts in stock &amp; on request</span>
+              <span className="marque-count"><CountUp value={m.count} /></span>
+              <span className="marque-unit"><T>parts in stock & on request</T></span>
               <h3>{m.make}</h3>
-              <p className="muted">{m.note}</p>
+              <p className="muted"><T>{m.note}</T></p>
               <div className="marque-actions">
-                <Link className="btn small primary" href={`/store?brand=${m.make}`}>Shop {m.make}</Link>
+                <Link className="btn small primary" href={`/store?brand=${m.make}`}><T v={{ make: m.make }}>{"Shop {make}"}</T></Link>
                 
               </div>
             </article>
@@ -67,32 +68,51 @@ export default async function Home() {
         </TiltGrid>
       </section>
 
-      <section className="wrap section reveal" aria-label="In numbers">
+      <L as="section" className="wrap section reveal" aria-label="In numbers">
         <div className="stats">
-          <div><b>{total}</b><span>parts listed by Autovivo</span></div>
-          <div><b>2</b><span>locations: Modena &amp; Dubai</span></div>
-          <div><b>3</b><span>marques: Ferrari, Lamborghini, Maserati</span></div>
-          <div><b>100+</b><span>countries shipped to</span></div>
+          <div><b><CountUp value={total} /></b><span><T>parts listed by Autovivo</T></span></div>
+          <div><b><CountUp value={2} /></b><span><T>locations: Modena & Dubai</T></span></div>
+          <div><b><CountUp value={3} /></b><span><T>marques: Ferrari, Lamborghini, Maserati</T></span></div>
+          <div><b><CountUp value={100} suffix="+" /></b><span><T>countries shipped to</T></span></div>
         </div>
-      </section>
+      </L>
 
       <section className="wrap section reveal" aria-labelledby="how-h">
         <div className="section-head centered">
-          <div className="eyebrow">How it works</div>
-          <h2 id="how-h">From the diagram to <em>your door.</em></h2>
+          <div className="eyebrow"><T>How it works</T></div>
+          <h2 id="how-h"><T>{"From the diagram to <em>your door.</em>"}</T></h2>
         </div>
         <TiltGrid className="steps-wrap" selector=".steps li" tilt={0.6}><ol className="steps">
-          <li><b>1</b><h3>Find the part</h3><p>Tap a point on the car, open an assembly group, or search all {total} listed parts by name or part number.</p></li>
-          <li><b>2</b><h3>Add it to your enquiry</h3><p>Collect parts and groups in one list. Prices are on request, so nothing is charged online.</p></li>
-          <li><b>3</b><h3>We check fitment</h3><p>Send your VIN. We confirm the part number and fitment, then reply with price and availability.</p></li>
+          <li><b>1</b><h3><T>Find the part</T></h3><p><T v={{ total }}>{"Explore the car in 3D, open an assembly group, or search all {total} listed parts by name or part number."}</T></p></li>
+          <li><b>2</b><h3><T>Add it to your enquiry</T></h3><p><T>Collect parts and groups in one list. Prices are on request, so nothing is charged online.</T></p></li>
+          <li><b>3</b><h3><T>We check fitment</T></h3><p><T>Send your VIN. We confirm the part number and fitment, then reply with price and availability.</T></p></li>
         </ol></TiltGrid>
+      </section>
+
+      <section className="wrap section reveal" aria-labelledby="pre-h">
+        <div className="preorder">
+          <div className="preorder-copy">
+            <div className="eyebrow"><T>Pre-order</T></div>
+            <h2 id="pre-h"><T>{"Not in stock? <em>Pre-order it.</em>"}</T></h2>
+            <p><T>Tell us the part you need. We source it from Italy and Dubai and reply with price, availability and lead time.</T></p>
+            <div className="hero-actions">
+              <Link className="btn primary" href="/preorder"><T>Start a pre-order</T></Link>
+              <Link className="btn" href="/store"><T v={{ total }}>{"Browse {total} parts"}</T></Link>
+            </div>
+          </div>
+          <ul className="preorder-points">
+            <li><span aria-hidden="true">🧾</span><div><b><T>No online payment</T></b><T>Nothing is charged until we confirm price and availability.</T></div></li>
+            <li><span aria-hidden="true">🔎</span><div><b><T>Fitment checked</T></b><T>Send your VIN and we confirm the part number before it ships.</T></div></li>
+            <li><span aria-hidden="true">🚚</span><div><b><T>Sourced from Modena & Dubai</T></b><T>Delivered worldwide once confirmed.</T></div></li>
+          </ul>
+        </div>
       </section>
 
       <section className="wrap section reveal" aria-labelledby="facts-h">
         <div className="section-head centered">
-          <div className="eyebrow">Before you order</div>
-          <h2 id="facts-h">Fitment, <em>checked.</em></h2>
-          <p>Send us your VIN and we confirm the part number and fitment before anything ships.</p>
+          <div className="eyebrow"><T>Before you order</T></div>
+          <h2 id="facts-h"><T>{"Fitment, <em>checked.</em>"}</T></h2>
+          <p><T>Send us your VIN and we confirm the part number and fitment before anything ships.</T></p>
         </div>
         <TiltGrid className="board" selector=".metric" tilt={0.6}>
           <Metric n={v.counts.assemblies} label="Assembly groups" note="Titles from a public 488 GTB (USA) index." pill="publicly_listed" />
@@ -101,15 +121,19 @@ export default async function Home() {
           <Metric n={v.counts.fitments} label="Fitment records" note="As listed; confirm against your VIN." pill="publicly_listed" />
         </TiltGrid>
         {factSource && (
-          <p className="fact-line muted">488 GTB facts from {factSource.sourceTitle} ({factSource.sourceRef}), checked {formatDate(factSource.checkedOn)} <StatusPill status={factSource.verificationStatus} /></p>
+          <p className="fact-line muted"><T>488 GTB facts from</T> <T>{factSource.sourceTitle}</T> (<T>{factSource.sourceRef ?? ""}</T>), <T>checked</T> <LocalDate d={factSource.checkedOn} /> <StatusPill status={factSource.verificationStatus} /></p>
         )}
       </section>
 
+      <section className="wrap section reveal" aria-label="Quick enquiry">
+        <EnquiryForm />
+      </section>
+
       <section className="wrap section cta-final reveal" aria-labelledby="cta-h">
-        <h2 id="cta-h">Need a part that isn&rsquo;t <em>listed?</em></h2>
-        <p className="muted">Autovivo sources genuine parts on request from Italy and Dubai.</p>
+        <h2 id="cta-h"><T>{"Need a part that isn’t <em>listed?</em>"}</T></h2>
+        <p className="muted"><T>Autovivo sources genuine parts on request from Italy and Dubai.</T></p>
         <div className="hero-actions">
-          <a className="btn primary" href="tel:+97143287914">Call +971 4 328 7914</a>
+          <a className="btn primary" href="tel:+97143287914"><T>Call</T> +971 4 328 7914</a>
           <a className="btn" href="mailto:info@autovivo.it">info@autovivo.it</a>
         </div>
       </section>
@@ -121,9 +145,9 @@ function Metric({ n, label, note, pill }: { n: number; label: string; note: stri
   return (
     <div className="card metric">
       <StatusPill status={pill} />
-      <b>{n}</b>
-      <div>{label}</div>
-      <p>{note}</p>
+      <b><CountUp value={n} /></b>
+      <div><T>{label}</T></div>
+      <p><T>{note}</T></p>
     </div>
   );
 }

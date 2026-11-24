@@ -2,9 +2,9 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { api, ApiError, type Assembly, type VehicleDetail } from "@/lib/api";
 import Explorer from "@/components/Explorer";
-import PhotoStage from "@/components/PhotoStage";
-import { loadHotspots } from "@/lib/hotspots";
+import CarStage3D from "@/components/CarStage3D";
 import { ApiDown } from "@/components/ApiDown";
+import { T } from "@/lib/i18n";
 
 type Params = { params: Promise<{ slug: string }>; searchParams: Promise<{ assembly?: string }> };
 
@@ -38,8 +38,8 @@ export default async function VehiclePage({ params, searchParams }: Params) {
   const initial = assembly && list.some((a) => a.code === assembly) ? assembly : null;
   return (
     <>
-      <h1 className="sr-only">{v.make} {v.model} explorer</h1>
-      <Explorer vehicle={v} assemblies={list} initialCode={initial} stage={<PhotoStage spots={await loadHotspots("Ferrari")} />} />
+      <h1 className="sr-only">{v.make} {v.model} <T>explorer</T></h1>
+      <Explorer vehicle={v} assemblies={list} initialCode={initial} stage={<CarStage3D />} />
     </>
   );
 }

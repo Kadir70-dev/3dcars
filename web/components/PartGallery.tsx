@@ -3,8 +3,10 @@
 // Thumbnails swap the photo with a flip. Falls back to a gentle idle float; static for reduced motion.
 import Image from "next/image";
 import { useRef, useState } from "react";
+import { useT } from "@/lib/i18n";
 
 export default function PartGallery({ images, name }: { images: string[]; name: string }) {
+  const t = useT();
   const [i, setI] = useState(0);
   const [flip, setFlip] = useState(0);
   const stage = useRef<HTMLDivElement>(null);
@@ -31,15 +33,15 @@ export default function PartGallery({ images, name }: { images: string[]; name: 
     <div className="gal3d">
       <div ref={stage} className="gal3d-stage" data-live="0" onPointerMove={move} onPointerDown={move} onPointerLeave={() => set(0, 0, false)}>
         <div className="gal3d-card" key={flip}>
-          <Image src={images[i]} alt={`${name} — photo ${i + 1}`} fill sizes="(max-width: 1000px) 100vw, 420px" priority={i === 0} />
+          <Image src={images[i]} alt={t("{name} — photo {n}", { name, n: i + 1 })} fill sizes="(max-width: 1000px) 100vw, 420px" priority={i === 0} />
         </div>
         <span className="gal3d-shadow" aria-hidden="true" />
         <span className="gal3d-glare" aria-hidden="true" />
       </div>
       {images.length > 1 && (
-        <div className="gal3d-thumbs" role="tablist" aria-label="Photos">
+        <div className="gal3d-thumbs" role="tablist" aria-label={t("Photos")}>
           {images.map((src, n) => (
-            <button key={src} role="tab" aria-selected={n === i} aria-label={`Photo ${n + 1}`} onClick={() => pick(n)}>
+            <button key={src} role="tab" aria-selected={n === i} aria-label={t("Photo {n}", { n: n + 1 })} onClick={() => pick(n)}>
               <Image src={src} alt="" fill sizes="80px" />
             </button>
           ))}

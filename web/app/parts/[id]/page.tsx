@@ -7,6 +7,7 @@ import { Known, ProvenanceNote, StatusPill } from "@/components/Status";
 import { AddPart } from "@/components/AddPart";
 import { ApiDown } from "@/components/ApiDown";
 import PartGallery from "@/components/PartGallery";
+import { T } from "@/lib/i18n";
 
 type P = { params: Promise<{ id: string }> };
 
@@ -38,34 +39,34 @@ export default async function PartPage({ params }: P) {
   return (
     <div className="wrap">
       <header className="page-head">
-        <div className="eyebrow"><Link href="/catalog">Catalog</Link> / Part</div>
+        <div className="eyebrow"><Link href="/catalog"><T>Catalog</T></Link> / <T>Part</T></div>
         <h1>{p.name}</h1>
         <p style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap" }}>
-          <span className="mono">{p.oemPartNumber ?? "OEM number not verified"}</span>
+          <span className="mono">{p.oemPartNumber ?? <T>OEM number not verified</T>}</span>
           <StatusPill status={p.provenance.verificationStatus} />
         </p>
       </header>
       <div className="two-col">
         <div className="list">
           <section className="card row-card">
-            <h2 style={{ fontSize: 26 }}>Specifications</h2>
-            {p.specs.length === 0 ? <p>No specifications recorded. Values are added only from an authorized source.</p> : (
+            <h2 style={{ fontSize: 26 }}><T>Specifications</T></h2>
+            {p.specs.length === 0 ? <p><T>No specifications recorded. Values are added only from an authorized source.</T></p> : (
               <table className="data-table"><tbody>
                 {p.specs.map((s) => (
-                  <tr key={s.key}><td>{s.key}</td><td><b>{s.value}{s.unit ? ` ${s.unit}` : ""}</b></td><td><StatusPill status={s.provenance.verificationStatus} /></td><td className="muted">{s.provenance.sourceTitle}</td></tr>
+                  <tr key={s.key}><td><T>{s.key}</T></td><td><b>{s.value}{s.unit ? ` ${s.unit}` : ""}</b></td><td><StatusPill status={s.provenance.verificationStatus} /></td><td className="muted"><T>{s.provenance.sourceTitle}</T></td></tr>
                 ))}
               </tbody></table>
             )}
           </section>
           <section className="card row-card">
-            <h2 style={{ fontSize: 26 }}>Fitment</h2>
-            {p.fitments.length === 0 ? <p>No fitment records. Model-year and VIN compatibility are <b>not verified</b>.</p> : (
+            <h2 style={{ fontSize: 26 }}><T>Fitment</T></h2>
+            {p.fitments.length === 0 ? <p><T>{"No fitment records. Model-year and VIN compatibility are <b>not verified</b>."}</T></p> : (
               <div className="table-wrap"><table className="data-table">
-                <thead><tr><th>Vehicle</th><th>Year</th><th>Market</th><th>VIN range</th><th>Note</th><th>Status</th></tr></thead>
+                <thead><tr><th><T>Vehicle</T></th><th><T>Year</T></th><th><T>Market</T></th><th><T>VIN range</T></th><th><T>Note</T></th><th><T>Status</T></th></tr></thead>
                 <tbody>
                   {p.fitments.map((f, i) => (
                     <tr key={i}><td>{f.vehicleSlug}</td><td>{f.modelYear ?? "—"}</td><td>{f.market ?? "—"}</td>
-                      <td className="mono">{f.vinFrom ? `${f.vinFrom} → ${f.vinTo ?? "…"}` : "—"}</td><td className="muted">{f.notes ?? "—"}</td><td><StatusPill status={f.provenance.verificationStatus} /></td></tr>
+                      <td className="mono">{f.vinFrom ? `${f.vinFrom} → ${f.vinTo ?? "…"}` : "—"}</td><td className="muted">{f.notes ? <T>{f.notes}</T> : "—"}</td><td><StatusPill status={f.provenance.verificationStatus} /></td></tr>
                   ))}
                 </tbody>
               </table></div>
@@ -73,18 +74,18 @@ export default async function PartPage({ params }: P) {
           </section>
           {p.fitModels && p.fitModels.length > 0 && (
             <section className="card row-card">
-              <h2 style={{ fontSize: 26 }}>Fits (as listed by the store)</h2>
-              <p className="muted">{p.brand ? `${p.brand} · ` : ""}Copied from the Autovivo listing; not checked against the manufacturer’s catalogue.</p>
+              <h2 style={{ fontSize: 26 }}><T>Fits (as listed by the store)</T></h2>
+              <p className="muted">{p.brand ? `${p.brand} · ` : ""}<T>Copied from the Autovivo listing; not checked against the manufacturer’s catalogue.</T></p>
               <ul className="fit-list">{p.fitModels.map((f) => <li key={f}>{f}</li>)}</ul>
             </section>
           )}
           <section className="card row-card">
-            <h2 style={{ fontSize: 26 }}>Used in</h2>
-            {p.assemblies.length === 0 && <p>Not yet mapped to one of the 95 assembly groups.</p>}
+            <h2 style={{ fontSize: 26 }}><T>Used in</T></h2>
+            {p.assemblies.length === 0 && <p><T>Not yet mapped to one of the 95 assembly groups.</T></p>}
             {p.assemblies.map((a) => (
               <p key={`${a.assemblyCode}-${a.diagramRef}`}>
-                <Link href={`/vehicles/ferrari-488-gtb?assembly=${a.assemblyCode}`}>{a.assemblyCode} · {a.assemblyName}</Link>
-                {" "}— qty {a.quantity ?? "not verified"}{a.diagramRef ? `, callout ${a.diagramRef}` : ""}
+                <Link href={`/vehicles/ferrari-488-gtb?assembly=${a.assemblyCode}`}>{a.assemblyCode} · <T>{a.assemblyName ?? ""}</T></Link>
+                {" "}— <T>qty</T> {a.quantity ?? <T>not verified</T>}{a.diagramRef ? <>, <T>callout</T> {a.diagramRef}</> : ""}
               </p>
             ))}
           </section>
@@ -93,14 +94,14 @@ export default async function PartPage({ params }: P) {
           {p.imageUrl && <PartGallery images={p.images?.length ? p.images : [p.imageUrl]} name={p.name} />}
           {p.categories && p.categories.length > 0 && <p className="muted">{p.categories.join(" · ")}</p>}
           <div className="kv" style={{ marginTop: 0 }}>
-            <div><small>Revision</small><Known value={p.revision} missing="Not recorded" /></div>
-            <div><small>Price</small><Known value={null} missing="On request" /></div>
+            <div><small><T>Revision</T></small><Known value={p.revision} missing="Not recorded" /></div>
+            <div><small><T>Price</T></small><Known value={null} missing="On request" /></div>
           </div>
           {p.description && <p className="muted">{p.description}</p>}
           <ProvenanceNote p={p.provenance} />
           <div className="detail-actions">
             <AddPart id={p.id} label={`${p.oemPartNumber ?? "No OEM no."} · ${p.name}`} />
-            {p.listingUrl && <a className="btn" href={p.listingUrl} target="_blank" rel="noreferrer">View on Autovivo store ↗</a>}
+            {p.listingUrl && <a className="btn" href={p.listingUrl} target="_blank" rel="noreferrer"><T>View on Autovivo store ↗</T></a>}
           </div>
         </aside>
       </div>
