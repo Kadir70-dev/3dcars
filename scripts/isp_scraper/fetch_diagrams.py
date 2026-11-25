@@ -4,6 +4,7 @@ and --i-confirm-diagram-authorization. Read-only GETs via the existing rate-limi
 notices inside the files are kept untouched. Resumable (skips files already present)."""
 import argparse, hashlib, json, sys
 from pathlib import Path
+import os, sys; sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))  # -I mode omits the script dir
 import isp_scraper as isp
 from extract_hotspots import extract
 

@@ -3,8 +3,9 @@
 Extracts the catalogue visible to our authorized account on
 `cloud.interactivespares.com/microcom` into SQLite, CSV and Excel.
 
-**Status: engine built and sample-validated. Bulk extraction and any commercial
-publication are GATED on written authorization.** Every diagram on the portal carries
+**Status: full extraction COMPLETE (2026-11-25: 55 models, 5,909 plates, 240,731 rows, 85,229 unique OEMs).
+Bulk extraction ran under the user's confirmed permission; commercial publication and diagram downloads
+remain GATED on written authorization.** Every diagram on the portal carries
 "reproduction ... for private or commercial purposes ... is not permitted unless
 authorized in writing by Ferrari S.p.A." Obtain that permission (or the portal
 operator's, Zanasi Group / Interactive Spares) before the full run or publishing.
@@ -59,3 +60,28 @@ Not exposed by the portal: VAT, dealer-vs-retail split, stock quantity, manufact
 ## Estimate (from tree calls, 2026-11-25)
 55 models, 5,909 plates (6 cyl 448, 8 cyl 3,078, 12 cyl 2,258, Challenge 125),
 about 31.6 rows/plate in sample, so roughly 187k part rows; about 3 h at the default rate.
+
+
+## Final exports, validation and refreshes (from the completed database - no new crawl needed)
+```bash
+.venv/bin/python export_fast.py          # CSV + XLSX + extraction_report.json in ~3 min (single pass, no per-row queries)
+.venv/bin/python build_catalogue.py      # ../../catalogue tree, metadata, relational CSVs, diagram_part_mapping.json
+.venv/bin/python validate_exports.py     # cross-checks SQLite/CSV/XLSX/JSON/catalogue counts -> validation_report.json
+```
+Do not use `isp_scraper.py export` for large databases: its per-row subqueries took 30+ min without finishing.
+Original portal prices (including 0.00) are preserved in every file; the storefront shows "Request Price" for 0.
+
+### Incremental price refresh (price_history appends a row only when a price changes)
+```bash
+read -rs ISP_PASS; export ISP_PASS ISP_USER='<portal user>'; .venv/bin/python isp_scraper.py login; unset ISP_PASS
+.venv/bin/python isp_scraper.py crawl --scope full --refresh --delay 1.5 --i-confirm-bulk-authorization   # all plates, ~3 h
+.venv/bin/python isp_scraper.py crawl --scope full --refresh --model "F8" --i-confirm-bulk-authorization  # one model family
+.venv/bin/python export_fast.py && .venv/bin/python build_catalogue.py && .venv/bin/python validate_exports.py
+```
+Keep Interactive Spares prices separate from other sources (e.g. FerrariParts UK): the `isp.price.source` column
+in `catalogue/schema/isp_illustrated_catalogue.sql` exists for that comparison.
+
+### Diagrams (gated)
+`fetch_diagrams.py` refuses to run without `auth/diagram_authorization.txt` (reference to Ferrari S.p.A. written
+reproduction permission) and `--i-confirm-diagram-authorization`. After download it runs `extract_hotspots.py`
+(offline) to write `hotspots.json` per assembly. Nothing under `catalogue/` is ever committed.

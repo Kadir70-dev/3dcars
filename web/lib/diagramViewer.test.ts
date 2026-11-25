@@ -27,8 +27,8 @@ describe("diagramViewer helpers", () => {
     expect(matchesQuery(row, "")).toBe(true);
   });
   it("formats EUR and never invents a price", () => {
-    expect(formatPrice(null)).toBe("On request");
-    expect(formatPrice(0)).toBe("Price on request");
+    expect(formatPrice(null)).toBe("Request Price");
+    expect(formatPrice(0)).toBe("Request Price");
     expect(formatPrice(7572.99)).toContain("7,572.99");
   });
 });

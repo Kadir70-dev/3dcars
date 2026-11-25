@@ -200,7 +200,7 @@ export default function DiagramViewer({ diagram, callouts, rows, title, notice }
             <div className="dv-actions">
               <button type="button" className={inList(r.partNumber) ? "btn" : "btn primary"}
                 onClick={() => (inList(r.partNumber) ? shortlist.remove({ kind: "part", ref: r.partNumber }) : add(r))}>
-                {inList(r.partNumber) ? "✓ In enquiry list" : "Add to cart"}
+                {inList(r.partNumber) ? "✓ In enquiry list" : r.price != null && r.price > 0 ? "Add to cart" : "Add to enquiry list"}
               </button>
               <Link className="btn" href="/quote" onClick={() => add(r)}>Request quotation</Link>
             </div>

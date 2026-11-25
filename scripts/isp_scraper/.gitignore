@@ -6,3 +6,4 @@ logs/
 __pycache__/
 extraction_report.json
 tests/__pycache__/
+validation_report.json

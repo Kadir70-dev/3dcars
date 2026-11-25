@@ -44,7 +44,7 @@ def main():
     for a in conn.execute("SELECT * FROM assemblies ORDER BY model_id, plate_code"):
         v = vmap.get(a["model_id"])
         if not v: continue
-        s = uniq(slugs.setdefault(a["model_id"], set()), slug(f'{a["number"] or a["plate_code"]}-{a["name"]}'))
+        s = uniq(slugs.setdefault(a["model_id"], set()), slug(f'{a["number"] or a["plate_code"]}-{re.sub(r"^\s*\d+\s*[-_]\s*", "", a["name"] or "")}'))
         rel = f'diagrams/{v["group_slug"]}/{v["slug"]}/{s}'
         rows = parts_by_asm.get(a["assembly_id"], [])
         refs = [{

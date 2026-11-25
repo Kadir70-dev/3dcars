@@ -50,8 +50,8 @@ export function matchesQuery(r: DiagramRow, q: string): boolean {
 }
 
 export function formatPrice(price: number | null, currency = "EUR"): string {
-  if (price == null) return "On request";
-  if (price === 0) return "Price on request";
+  // The source database keeps the portal's original 0.00; customers see "Request Price" instead.
+  if (price == null || price <= 0) return "Request Price";
   try {
     return new Intl.NumberFormat("en-IE", { style: "currency", currency }).format(price);
   } catch {
