@@ -25,15 +25,44 @@ export default async function Home() {
   const brands = store.result.brands;
   const total = Object.values(brands).reduce((a, b) => a + b, 0);
   const factSource = v.facts[0]?.provenance;
+  const cats = [
+    { q: "brake", label: "Brakes", d: "M12 3a9 9 0 100 18 9 9 0 000-18zm0 5a4 4 0 100 8 4 4 0 000-8z" },
+    { q: "engine", label: "Engine", d: "M4 9h3l2-3h6l2 3h3v8h-3l-2 2H9l-2-2H4V9zm5 3h6" },
+    { q: "light", label: "Lights", d: "M9 18h6m-5 3h4M12 3a6 6 0 00-3 11c.6.5 1 1.2 1 2h4c0-.8.4-1.5 1-2a6 6 0 00-3-11z" },
+    { q: "wheel", label: "Wheels", d: "M12 3a9 9 0 100 18 9 9 0 000-18zm0 7a2 2 0 100 4 2 2 0 000-4zm0-7v5m0 8v5M3 12h5m8 0h5" },
+    { q: "filter", label: "Filters", d: "M4 5h16l-6 8v6l-4-2v-4L4 5z" },
+    { q: "bumper", label: "Bumpers", d: "M3 14l2-5h14l2 5v3H3v-3zm3 0h.01M18 14h.01" },
+  ];
   const marques = [
-    { make: "Ferrari", count: brands.Ferrari ?? 0, note: "Genuine Ferrari parts, new and used" },
-    { make: "Lamborghini", count: brands.Lamborghini ?? 0, note: "Genuine Lamborghini parts, new and used" },
-    { make: "Maserati", count: brands.Maserati ?? 0, note: "Genuine Maserati parts, new and used" },
+    { make: "Ferrari", count: brands.Ferrari ?? 0, note: "Genuine Ferrari parts, new and used", photo: "/photos/ferrari-488-gtb.jpg" },
+    { make: "Lamborghini", count: brands.Lamborghini ?? 0, note: "Genuine Lamborghini parts, new and used", photo: "/photos/lamborghini-centenario.jpg" },
+    { make: "Maserati", count: brands.Maserati ?? 0, note: "Genuine Maserati parts, new and used", photo: "/photos/ferrari-458-italia.jpg" },
   ];
 
   return (
     <>
-      <HomeVideo />
+      <HomeVideo>
+        <div className="home-hero">
+          <div className="wrap">
+            <div className="eyebrow" style={{ color: "#fff" }}><T>Ferrari · Lamborghini · Maserati</T></div>
+            <h1><T>{"Italian supercar parts. <em>Precisely sourced.</em>"}</T></h1>
+            <p className="lead"><T>Genuine OEM spares from our warehouses in Modena and Dubai, fitment-checked against your VIN.</T></p>
+            <div className="hero-row">
+              <form className="hero-search" action="/store" method="get" role="search">
+                <label htmlFor="hero-q" className="sr-only"><T>Search by OEM part number or name</T></label>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true"><circle cx="11" cy="11" r="7" /><path d="m20 20-3.5-3.5" /></svg>
+                <L as="input" id="hero-q" name="q" type="search" autoComplete="off" maxLength={100} placeholder="Search OEM part number or name…" />
+                <button type="submit"><T>Search</T></button>
+              </form>
+              <div className="hero-chips">
+                <span><T>Shop</T></span>
+                {marques.map((m) => <Link key={m.make} href={`/store?brand=${m.make}`}>{m.make}</Link>)}
+              </div>
+            </div>
+          </div>
+          <span className="hero-scroll" aria-hidden="true" />
+        </div>
+      </HomeVideo>
 
       <section className="wrap section reveal" aria-labelledby="marques-h">
         <div className="section-head centered">
@@ -43,6 +72,8 @@ export default async function Home() {
         <TiltGrid className="marques" selector=".marque" tilt={0.7}>
           {marques.map((m) => (
             <article className="card marque" key={m.make}>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img className="m-img" src={m.photo} alt="" loading="lazy" />
               <span className="marque-count"><CountUp value={m.count} /></span>
               <span className="marque-unit"><T>parts in stock & on request</T></span>
               <h3>{m.make}</h3>
@@ -54,6 +85,45 @@ export default async function Home() {
             </article>
           ))}
         </TiltGrid>
+      </section>
+
+      <section className="wrap section reveal" aria-labelledby="cats-h">
+        <div className="section-head">
+          <div><div className="eyebrow"><T>Shop by component</T></div>
+            <h2 id="cats-h" style={{ marginTop: 18 }}><T>{"Find the <em>system.</em>"}</T></h2></div>
+          <p><T>Jump straight to the parts you need, then narrow by marque and model.</T></p>
+        </div>
+        <div className="cat-grid">
+          {cats.map((c) => (
+            <Link key={c.q} className="cat-tile" href={`/store?q=${c.q}`}>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d={c.d} /></svg>
+              <span><b><T>{c.label}</T></b><small><T>Browse</T> →</small></span>
+            </Link>
+          ))}
+        </div>
+      </section>
+
+      <section className="wrap section reveal" aria-labelledby="ed-h">
+        <div className="editorial">
+          <figure className="img-reveal">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img className="parallax" src="/photos/ferrari-458-italia.jpg" alt="Ferrari 458 Italia" loading="lazy" />
+          </figure>
+          <div>
+            <div className="eyebrow"><T>The Autovivo workshop</T></div>
+            <h2 id="ed-h"><T>{"Right part. <em>First time.</em>"}</T></h2>
+            <p><T>Every enquiry is matched to your chassis number by a parts specialist before anything ships, so the part that arrives is the part that fits.</T></p>
+            <ul>
+              <li><b>01</b><span><T>OEM part number and VIN check</T></span></li>
+              <li><b>02</b><span><T>Stock held in Modena and Dubai</T></span></li>
+              <li><b>03</b><span><T>Worldwide dispatch once confirmed</T></span></li>
+            </ul>
+            <div className="hero-actions" style={{ marginTop: 0 }}>
+              <Link className="btn primary" href="/preorder"><T>Start a pre-order</T></Link>
+              <Link className="btn" href="/contact"><T>Visit the workshop</T></Link>
+            </div>
+          </div>
+        </div>
       </section>
 
       <L as="section" className="wrap section reveal" aria-label="In numbers">

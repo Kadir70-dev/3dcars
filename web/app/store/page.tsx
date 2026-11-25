@@ -6,6 +6,7 @@ import { StatusPill } from "@/components/Status";
 import { AddPart } from "@/components/AddPart";
 import { ApiDown } from "@/components/ApiDown";
 import TiltGrid from "@/components/TiltGrid";
+import FilterPanel from "@/components/FilterPanel";
 import { L, T } from "@/lib/i18n";
 
 export const metadata: Metadata = {
@@ -51,30 +52,31 @@ export default async function Store({ searchParams }: SP) {
         <p><T>Every part listed in the Autovivo store, with its part number, photo and the models it is listed to fit. Prices on request — use Enquire or open the listing in the Autovivo store. Fitment is as listed by the store; confirm it against your VIN before ordering.</T></p>
       </header>
 
-      <L as="nav" className="brand-tabs" aria-label="Brand">
-        <Link href={href({ brand: "", model: "" })} aria-current={brand === "" ? "page" : undefined}><T>All</T> ({all})</Link>
-        {BRANDS.map((b) => <Link key={b} href={href({ brand: b, model: "" })} aria-current={brand === b ? "page" : undefined}>{b} ({brands[b] ?? 0})</Link>)}
-      </L>
-
-      <form key={brand} className="card catalog" method="get" role="search" style={{ marginTop: 16 }}>
-        {brand && <input type="hidden" name="brand" value={brand} />}
-        <div className="tools catalog-tools store-tools">
-          <label className="search-wrap">
-            <span className="sr-only"><T>Search term</T></span>
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true"><circle cx="11" cy="11" r="7" /><path d="m20 20-3.5-3.5" /></svg>
-            <L as="input" className="field" type="search" name="q" defaultValue={q} placeholder="Part name or part number…" />
-          </label>
-          <label><span className="sr-only"><T>Model</T></span>
-            <select className="field" name="model" defaultValue={model}>
-              <option value=""><T>All models</T></option>
-              {models.map((m) => <option key={m.model} value={m.model}>{m.model} ({m.parts})</option>)}
-            </select>
-          </label>
-          <button className="btn primary" type="submit"><T>Search</T></button>
+      <div className="shop">
+        <div>
+          <FilterPanel active={(brand ? 1 : 0) + (model ? 1 : 0) + (q ? 1 : 0)}>
+            <form key={brand} className="f-search" method="get" role="search">
+              {brand && <input type="hidden" name="brand" value={brand} />}
+              <h2><T>OEM part number or name</T></h2>
+              <L as="input" className="field" type="search" name="q" defaultValue={q} placeholder="Part name or part number…" aria-label="Search term" />
+              <h2 style={{ marginTop: 8 }}><T>Model</T></h2>
+              <select className="field" name="model" defaultValue={model} aria-label="Model">
+                <option value=""><T>All models</T></option>
+                {models.map((m) => <option key={m.model} value={m.model}>{m.model} ({m.parts})</option>)}
+              </select>
+              <button className="btn primary" type="submit"><T>Search</T></button>
+              {(q || model) && <Link href={href({ q: "", model: "" })} className="muted"><T>Clear filters</T></Link>}
+            </form>
+            <L as="nav" className="f-group" aria-label="Brand">
+              <h2><T>Marque</T></h2>
+              <ul className="f-brands">
+                <li><Link href={href({ brand: "", model: "" })} aria-current={brand === "" ? "page" : undefined}><T>All</T> <span>{all}</span></Link></li>
+                {BRANDS.map((b) => <li key={b}><Link href={href({ brand: b, model: "" })} aria-current={brand === b ? "page" : undefined}>{b} <span>{brands[b] ?? 0}</span></Link></li>)}
+              </ul>
+            </L>
+          </FilterPanel>
         </div>
-        {(q || model) && <p style={{ margin: "12px 0 0" }}><Link href={href({ q: "", model: "" })} className="muted"><T>Clear filters</T></Link></p>}
-      </form>
-
+        <div className="shop-main">
       <p className="result-count" aria-live="polite" style={{ margin: "20px 0 12px" }}>
         <T v={{ n: total }}>{total === 1 ? "{n} part" : "{n} parts"}</T>{brand ? ` · ${brand}` : ""}{model ? <> · <T>fits</T> {model}</> : ""}{q ? ` · “${q}”` : ""}
       </p>
@@ -94,6 +96,7 @@ export default async function Store({ searchParams }: SP) {
                 </div>
                 <h3><Link href={`/parts/${p.id}`} title={p.name}>{p.name}</Link></h3>
                 <p className="muted">{p.brand}{p.fitModels.length ? <> · <T>fits</T> {p.fitModels.slice(0, 3).join(", ")}{p.fitModels.length > 3 ? "…" : ""}</> : ""}</p>
+                <div className="product-meta"><b><T>Price on request</T></b><span className="stock"><T>Stock on enquiry</T></span></div>
                 <div className="product-actions">
                   <AddPart compact id={p.id} label={`${p.oemPartNumber ?? "No part no."} · ${p.name}`} />
                   {p.listingUrl && <a className="store-link" href={p.listingUrl} target="_blank" rel="noreferrer" aria-label={`${p.name} · autovivo.it`}><T>On autovivo.it ↗</T></a>}
@@ -110,6 +113,8 @@ export default async function Store({ searchParams }: SP) {
           {page < pages ? <Link className="btn small" href={href({ page: page + 1 })}><T>Next ›</T></Link> : <span />}
         </L>
       )}
+        </div>
+      </div>
     </div>
   );
 }

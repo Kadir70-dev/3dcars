@@ -1,14 +1,15 @@
 import type { Metadata, Viewport } from "next";
-import { Bodoni_Moda, DM_Mono, Manrope } from "next/font/google";
+import { Barlow_Condensed, DM_Mono, Manrope } from "next/font/google";
 import { Footer, Header } from "@/components/Chrome";
 import { CurrencyWidget } from "@/components/CurrencyWidget";
 import Splash from "@/components/Splash";
 import { LangProvider } from "@/lib/i18n";
 import "./globals.css";
+import "./design-system.css";
 
-// Italian luxury: a Didone display face for headlines, a clean geometric sans for text, a quiet mono for labels.
+// Hybrid luxury: condensed engineering display face for headlines (Lamborghini-like), refined sans for text (Ferrari-like), quiet mono for part numbers.
 const sans = Manrope({ subsets: ["latin"], variable: "--font-sans", display: "swap" });
-const serif = Bodoni_Moda({ subsets: ["latin"], style: ["normal", "italic"], variable: "--font-serif", display: "swap" });
+const serif = Barlow_Condensed({ subsets: ["latin"], weight: ["500", "600", "700"], variable: "--font-serif", display: "swap" });
 const mono = DM_Mono({ subsets: ["latin"], weight: ["400", "500"], variable: "--font-mono", display: "swap" });
 
 export const metadata: Metadata = {

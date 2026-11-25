@@ -3,7 +3,7 @@
 // The navbar is fully transparent over the video and turns solid once you scroll past it.
 import { useEffect, useState } from "react";
 
-export default function HomeVideo() {
+export default function HomeVideo({ children }: { children?: React.ReactNode }) {
   const [past, setPast] = useState(false);
   useEffect(() => {
     const on = () => setPast(window.scrollY > window.innerHeight - 90);
@@ -22,6 +22,7 @@ export default function HomeVideo() {
       <video autoPlay muted loop playsInline preload="auto" poster="/photos/ferrari-488-gtb.jpg">
         <source src="/videos/hero.mp4" type="video/mp4" />
       </video>
+      {children}
     </section>
   );
 }
