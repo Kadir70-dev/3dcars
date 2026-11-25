@@ -92,7 +92,7 @@ export default async function Catalog({ searchParams }: SP) {
                   <h3><Link href={`/parts/${p.id}`}>{p.name}</Link></h3>
                   <p className="muted">{p.assemblyCode ? <>{p.assemblyCode} · <T>{p.assemblyName ?? ""}</T></> : <T>Assembly group not mapped yet</T>}</p>
                   <div className="product-actions">
-                    <AddPart id={p.id} label={`${p.oemPartNumber ?? "No part no."} · ${p.name}`} />
+                    <AddPart compact id={p.id} label={`${p.oemPartNumber ?? "No part no."} · ${p.name}`} />
                     {p.listingUrl && <a className="btn small" href={p.listingUrl} target="_blank" rel="noreferrer"><T>Autovivo store ↗</T></a>}
                   </div>
                 </div>

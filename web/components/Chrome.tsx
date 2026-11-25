@@ -11,13 +11,13 @@ const links = [
   { href: "/vehicles/ferrari-488-gtb", label: "Explorer" },
   { href: "/store", label: "All parts" },
   { href: "/catalog", label: "Catalog" },
-  { href: "/contact", label: "Find us" },
+  { href: "/contact", label: "Contact us" },
 ];
 
 const MARQUES = [
-  { make: "Ferrari", note: "Genuine parts, new and used", photo: "/photos/ferrari-488-gtb.jpg" },
-  { make: "Lamborghini", note: "Genuine parts, new and used", photo: "/photos/lamborghini-centenario.jpg" },
-  { make: "Maserati", note: "Genuine parts, new and used", photo: "/photos/ferrari-458-italia.jpg" },
+  { make: "Ferrari", note: "Genuine parts, new and used", photo: "/photos/ferrari-488-gtb.webp" },
+  { make: "Lamborghini", note: "Genuine parts, new and used", photo: "/photos/lamborghini-centenario.webp" },
+  { make: "Maserati", note: "Genuine parts, new and used", photo: "/photos/ferrari-458-italia.webp" },
 ];
 
 function SearchForm({ id, onDone }: { id: string; onDone?: () => void }) {
@@ -149,7 +149,7 @@ export function Footer() {
           <Link href="/preorder"><T>Pre-order</T></Link>
           <Link href="/catalog"><T>Catalog</T></Link>
           <Link href="/sources"><T>Part data & credits</T></Link>
-          <Link href="/contact"><T>Find us</T></Link>
+          <Link href="/contact"><T>Contact us</T></Link>
           <Link href="/quote"><T>Enquiry list</T></Link>
         </nav>
       </div>

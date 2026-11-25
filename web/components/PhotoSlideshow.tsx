@@ -5,9 +5,9 @@ import { useEffect, useState } from "react";
 import { L, T } from "@/lib/i18n";
 
 const SLIDES = [
-  { src: "/photos/ferrari-488-gtb.jpg", make: "Ferrari", model: "488 GTB" },
-  { src: "/photos/ferrari-458-italia.jpg", make: "Ferrari", model: "458 Italia" },
-  { src: "/photos/lamborghini-centenario.jpg", make: "Lamborghini", model: "Centenario" },
+  { src: "/photos/ferrari-488-gtb.webp", make: "Ferrari", model: "488 GTB" },
+  { src: "/photos/ferrari-458-italia.webp", make: "Ferrari", model: "458 Italia" },
+  { src: "/photos/lamborghini-centenario.webp", make: "Lamborghini", model: "Centenario" },
 ];
 const INTERVAL_MS = 3000;
 

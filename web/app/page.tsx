@@ -6,6 +6,7 @@ import { ApiDown } from "@/components/ApiDown";
 import TiltGrid from "@/components/TiltGrid";
 import CountUp from "@/components/CountUp";
 import EnquiryForm from "@/components/EnquiryForm";
+import VideoBreaker from "@/components/VideoBreaker";
 import { L, LocalDate, T } from "@/lib/i18n";
 
 // Rendered per request: Next 16.4 ISR regeneration referenced a CSS chunk missing from the build.
@@ -34,9 +35,9 @@ export default async function Home() {
     { q: "bumper", label: "Bumpers", d: "M3 14l2-5h14l2 5v3H3v-3zm3 0h.01M18 14h.01" },
   ];
   const marques = [
-    { make: "Ferrari", count: brands.Ferrari ?? 0, note: "Genuine Ferrari parts, new and used", photo: "/photos/ferrari-488-gtb.jpg" },
-    { make: "Lamborghini", count: brands.Lamborghini ?? 0, note: "Genuine Lamborghini parts, new and used", photo: "/photos/lamborghini-centenario.jpg" },
-    { make: "Maserati", count: brands.Maserati ?? 0, note: "Genuine Maserati parts, new and used", photo: "/photos/ferrari-458-italia.jpg" },
+    { make: "Ferrari", count: brands.Ferrari ?? 0, note: "Genuine Ferrari parts, new and used", photo: "/photos/ferrari-488-gtb.webp" },
+    { make: "Lamborghini", count: brands.Lamborghini ?? 0, note: "Genuine Lamborghini parts, new and used", photo: "/photos/lamborghini-centenario.webp" },
+    { make: "Maserati", count: brands.Maserati ?? 0, note: "Genuine Maserati parts, new and used", photo: "/photos/ferrari-458-italia.webp" },
   ];
 
   return (
@@ -51,7 +52,7 @@ export default async function Home() {
               <form className="hero-search" action="/store" method="get" role="search">
                 <label htmlFor="hero-q" className="sr-only"><T>Search by OEM part number or name</T></label>
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true"><circle cx="11" cy="11" r="7" /><path d="m20 20-3.5-3.5" /></svg>
-                <L as="input" id="hero-q" name="q" type="search" autoComplete="off" maxLength={100} placeholder="Search OEM part number or name…" />
+                <L as="input" id="hero-q" name="q" type="search" autoComplete="off" maxLength={100} placeholder="Part number or name…" />
                 <button type="submit"><T>Search</T></button>
               </form>
               <div className="hero-chips">
@@ -103,11 +104,13 @@ export default async function Home() {
         </div>
       </section>
 
+      <VideoBreaker />
+
       <section className="wrap section reveal" aria-labelledby="ed-h">
         <div className="editorial">
           <figure className="img-reveal">
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img className="parallax" src="/photos/ferrari-458-italia.jpg" alt="Ferrari 458 Italia" loading="lazy" />
+            <img className="parallax" src="/photos/ferrari-458-italia.webp" alt="Ferrari 458 Italia" loading="lazy" />
           </figure>
           <div>
             <div className="eyebrow"><T>The Autovivo workshop</T></div>
@@ -135,7 +138,7 @@ export default async function Home() {
         </div>
       </L>
 
-      <section className="wrap section reveal" aria-labelledby="how-h">
+      <div className="band ivory"><section className="wrap section reveal" aria-labelledby="how-h">
         <div className="section-head centered">
           <div className="eyebrow"><T>How it works</T></div>
           <h2 id="how-h"><T>{"From the diagram to <em>your door.</em>"}</T></h2>
@@ -145,7 +148,7 @@ export default async function Home() {
           <li><b>2</b><h3><T>Add it to your enquiry</T></h3><p><T>Collect parts and groups in one list. Prices are on request, so nothing is charged online.</T></p></li>
           <li><b>3</b><h3><T>We check fitment</T></h3><p><T>Send your VIN. We confirm the part number and fitment, then reply with price and availability.</T></p></li>
         </ol></TiltGrid>
-      </section>
+      </section></div>
 
       <section className="wrap section reveal" aria-labelledby="pre-h">
         <div className="preorder">
@@ -159,9 +162,9 @@ export default async function Home() {
             </div>
           </div>
           <ul className="preorder-points">
-            <li><span aria-hidden="true">🧾</span><div><b><T>No online payment</T></b><T>Nothing is charged until we confirm price and availability.</T></div></li>
-            <li><span aria-hidden="true">🔎</span><div><b><T>Fitment checked</T></b><T>Send your VIN and we confirm the part number before it ships.</T></div></li>
-            <li><span aria-hidden="true">🚚</span><div><b><T>Sourced from Modena & Dubai</T></b><T>Delivered worldwide once confirmed.</T></div></li>
+            <li><svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M6 3h12v18l-3-2-3 2-3-2-3 2V3zM9 8h6M9 12h6" /></svg><div><b><T>No online payment</T></b><T>Nothing is charged until we confirm price and availability.</T></div></li>
+            <li><svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M11 4a7 7 0 100 14 7 7 0 000-14zm9 16l-4-4M9 11l2 2 3-4" /></svg><div><b><T>Fitment checked</T></b><T>Send your VIN and we confirm the part number before it ships.</T></div></li>
+            <li><svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M3 6h11v10H3zM14 9h4l3 3v4h-7M7 19a2 2 0 100-4 2 2 0 000 4zm10 0a2 2 0 100-4 2 2 0 000 4z" /></svg><div><b><T>Sourced from Modena & Dubai</T></b><T>Delivered worldwide once confirmed.</T></div></li>
           </ul>
         </div>
       </section>

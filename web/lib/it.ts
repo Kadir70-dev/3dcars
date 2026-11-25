@@ -97,7 +97,7 @@ const UI: Record<string, string> = {
   "Explorer": "Esplora",
   "All parts": "Tutti i ricambi",
   "Catalog": "Catalogo",
-  "Find us": "Dove siamo",
+  "Contact us": "Contattaci",
   "Enquiry list": "Lista richieste",
   "Enquiry list, {n} item": "Lista richieste, {n} articolo",
   "Enquiry list, {n} items": "Lista richieste, {n} articoli",
@@ -565,7 +565,7 @@ const DATA: Record<string, string> = {
 export const IT: Record<string, string> = { ...UI, ...SYSTEMS, ...GROUPS, ...DATA,
   // page titles (tab titles)
   "Autovivo Spare Parts LLC – Italian Luxury Car Parts": "Autovivo Spare Parts LLC – Ricambi auto di lusso italiani",
-  "Find us — Dubai & Modena": "Dove siamo — Dubai e Modena",
+  "Contact us — Dubai & Modena": "Contattaci — Dubai e Modena",
   "All parts — Ferrari, Lamborghini, Maserati": "Tutti i ricambi — Ferrari, Lamborghini, Maserati",
   "Catalog search — Ferrari 488 GTB": "Ricerca nel catalogo — Ferrari 488 GTB",
   "Sources & data gaps": "Fonti e dati mancanti",

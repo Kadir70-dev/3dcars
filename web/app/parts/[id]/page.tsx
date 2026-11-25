@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { api, ApiError, type PartDetail } from "@/lib/api";
+import { api, ApiError, type PartDetail, type StoreResponse } from "@/lib/api";
 import { Known, ProvenanceNote, StatusPill } from "@/components/Status";
 import { AddPart } from "@/components/AddPart";
 import { ApiDown } from "@/components/ApiDown";
@@ -36,6 +36,11 @@ export async function generateMetadata({ params }: P): Promise<Metadata> {
 export default async function PartPage({ params }: P) {
   const p = await load((await params).id);
   if (!p) return <ApiDown />;
+  let related: StoreResponse["result"]["parts"] = [];
+  try {
+    const r = await api<StoreResponse>(`/store-parts?${new URLSearchParams({ brand: p.brand ?? "", q: "", model: p.fitModels?.[0] ?? "", page: "1" })}`);
+    related = r.result.parts.filter((x) => x.id !== p.id).slice(0, 4);
+  } catch { /* related parts are optional */ }
   return (
     <div className="wrap">
       <header className="page-head">
@@ -105,6 +110,26 @@ export default async function PartPage({ params }: P) {
           </div>
         </aside>
       </div>
+      {related.length > 0 && (
+        <section className="related" aria-labelledby="rel-h">
+          <div className="eyebrow"><T>Related spare parts</T></div>
+          <h2 id="rel-h" style={{ margin: "18px 0 28px" }}><T>{"You may also <em>need.</em>"}</T></h2>
+          <div className="elite-grid">
+            {related.map((r) => (
+              <article className="product elite" key={r.id}>
+                <Link href={`/parts/${r.id}`} className="product-img" tabIndex={-1} aria-hidden="true">
+                  <span className="product-float">{r.imageUrl ? <Image src={r.imageUrl} alt="" fill sizes="(max-width: 720px) 50vw, 300px" /> : null}</span>
+                </Link>
+                <div className="product-body">
+                  <div className="product-top"><span className="mono">{r.oemPartNumber ?? <T>No part no.</T>}</span></div>
+                  <h3><Link href={`/parts/${r.id}`} title={r.name}>{r.name}</Link></h3>
+                  <div className="product-meta"><b><T>Price on request</T></b><span className="stock"><T>Stock on enquiry</T></span></div>
+                </div>
+              </article>
+            ))}
+          </div>
+        </section>
+      )}
     </div>
   );
 }
