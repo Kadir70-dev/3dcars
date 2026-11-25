@@ -1,0 +1,5 @@
+# Extracted Interactive Spares data and Ferrari diagram files are proprietary/copyrighted:
+# nothing generated under catalogue/ is committed. Only README, schema/ and this file are tracked.
+diagrams/*
+metadata/*
+exports/*

@@ -1,0 +1,8 @@
+auth/
+data/
+exports/
+logs/
+.venv/
+__pycache__/
+extraction_report.json
+tests/__pycache__/
